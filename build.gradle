@@ -1,0 +1,24 @@
+group 'org.graphomatic'
+version '1.0.0'
+
+apply plugin: 'groovy'
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.7
+
+mainClassName = 'com.graphomatic.Main'
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile 'io.github.javaconductor:gserv:0.9.9'
+    compile 'org.codehaus.groovy:groovy-all:2.4.1'
+    compile 'com.gmongo:gmongo:1.5'
+    compile 'org.springframework:spring-context:4.1.4.RELEASE'
+    compile 'org.springframework.data:spring-data-mongodb:1.0.0.RELEASE'
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
