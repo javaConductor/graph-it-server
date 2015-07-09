@@ -21,10 +21,10 @@ def displayStatusOnConsole() {
 def setupAppenders() {
     appender("FILE", RollingFileAppender) {
         // add a status message regarding the file property
-        addInfo("Setting [file] property to [inboundtraffic.log]")
-        file = "/opt/inboundtraffic/log/inboundtraffic.log"
+        addInfo("Setting [file] property to [graph-it-server.log]")
+        file = "/opt/graphOmatic/graph-it-server/graph-it-server.log"
         rollingPolicy(TimeBasedRollingPolicy) {
-            fileNamePattern = "/opt/inboundtraffic/log/inboundtraffic.log.%d{yyyy-MM-dd}.%i"
+            fileNamePattern = "/opt/graphOmatic/graph-it-server/graph-it-server.log.%d{yyyy-MM-dd}.%i"
             timeBasedFileNamingAndTriggeringPolicy(SizeAndTimeBasedFNATP) {
                 maxFileSize = "100MB"
             }
@@ -48,7 +48,7 @@ def setupLoggers() {
     logger("groovyx.net.http", ERROR, ["CONSOLE"]) // Groovy HTTP
     logger("org.springframework", WARN, ["CONSOLE"]) // Spring
     logger("io.github.javaconductor.gserv", WARN, ["FILE"]) // gServ
-    logger("com.shoppertrak.inboundtraffic", DEBUG, ["CONSOLE", "FILE"]) // Spring
+    logger("com.graphomatic", DEBUG, ["CONSOLE", "FILE"]) // App
     //root(DEBUG, ["CONSOLE", "FILE"])
     root(TRACE, ["CONSOLE", "FILE"])
 }

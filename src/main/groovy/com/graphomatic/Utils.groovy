@@ -6,7 +6,7 @@ package com.graphomatic
 class Utils {
     static Map subMap( Map m, String prefix ){
         Map ret = [:]
-        m.each { String k, v ->
+        m.each { k, v ->
             if (k.startsWith(prefix) ){
                 ret[k.substring(prefix.length())] = v;
             }

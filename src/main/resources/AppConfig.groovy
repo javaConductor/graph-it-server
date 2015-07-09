@@ -25,7 +25,7 @@ beans {
     xmlns([ctx: 'http://www.springframework.org/schema/context',
            mongo: 'http://www.springframework.org/schema/data/mongo'])
     ctx.'component-scan'('base-package': "com.graphomatic")
-    mongo.repositories('base-package': "com.graphomatic.domnain")
+    mongo.repositories('base-package': "com.graphomatic.domain")
     ////////////////////////////////////////////////////////////////
     ///  Connector Objects for DB
     ////////////////////////////////////////////////////////////////

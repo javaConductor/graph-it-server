@@ -2,12 +2,14 @@ package com.graphomatic.service
 
 import com.graphomatic.Utils
 import com.graphomatic.domain.GraphItem
+import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import net.sf.json.groovy.JsonSlurper
 
 /**
  * Created by lcollins on 6/28/2015.
  */
+@Slf4j
 class RestService {
     def stopFn
     GraphItService graphItService
@@ -36,7 +38,7 @@ class RestService {
 
             /// remove a graphitem
             delete(':id') { id ->
-                writeJson graphItService.removeGraphItem(id)
+                writeJson { ok : graphItService.removeGraphItem(id) }
             }
 
             /// Update
@@ -46,9 +48,10 @@ class RestService {
             }
 
             /// Update item position
-            put('/:id/position/:x/:y') { graphItemId, x, y ->
-                GraphItem g = graphItService.updateGraphItemPosition(graphItemId, x, y)
-                writeJson Utils.persistentFields(g) + [links: links(g)]
+            put('/:id/position/:x:Number/:y:Number') {dummy, graphItemId, x, y ->
+                GraphItem g = graphItService.updateGraphItemPosition(graphItemId, x as int, y as int)
+                log.debug("graphItem moved to: $x,  $y");
+                writeJson Utils.persistentFields(g.properties) + [links: links(g)]
             }
 
             /// Create
@@ -82,7 +85,6 @@ class RestService {
             conversion(GraphItem) { istream ->
                 new JsonSlurper().parse(istream).properties as GraphItem
             }
-
             resource graphItemRes
         }
     }

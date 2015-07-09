@@ -1,7 +1,9 @@
 package com.graphomatic.service
 
 import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
+import com.graphomatic.domain.Relationship
 import groovy.util.logging.Slf4j
 
 /**
@@ -27,7 +29,7 @@ class GraphItService {
         return dbAccess.getGraphItem(id);
     }
 
-    GraphItem removeGraphItem(String id) {
+    boolean removeGraphItem(String id) {
         return dbAccess.removeGraphItem(id);
     }
 
@@ -60,11 +62,39 @@ class GraphItService {
                 new GraphItem(title: "Lee Collins",
                         position: new Position(x: 100L, y:100L),
                         data: [:],
-                        images: ['/images/manAndWomanBlackLight.jpg'])
+                        images: ['/images/manAndWomanBlackLight.jpg']),
+                new GraphItem(title: "David Collins",
+                        position: new Position(x: 200L, y:100L),
+                        data: [:],
+                        images: ['/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg'])
         ]
 
-        testData.each { gitem ->
+        def nuItems = testData.collect { gitem ->
             createGraphItem(gitem)
         }
+
+        /// create Relationship Types
+        def nuRels = [
+         new Relationship(name: "Child", type: "simple"),
+         new Relationship(name: "Parent", type: "simple"),
+        ]
+
+        nuRels.each { r ->
+            createRelationship(r);
+        }
+
+        def testRelationships = [
+                new ItemRelationship(sourceItemId: nuItems[0].id,
+                relatedItemId: nuItems[1].id, ),
+                new GraphItem(title: "David Collins",
+                        position: new Position(x: 200L, y:100L),
+                        data: [:],
+                        images: ['/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg'])
+        ]
+
+    }
+
+    Relationship createRelationship(Relationship relationship) {
+        dbAccess.createRelationship(relationship);
     }
 }

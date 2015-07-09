@@ -16,7 +16,7 @@ class Main {
 
         GenericGroovyApplicationContext context =
                 new GenericGroovyApplicationContext("classpath:AppConfig.groovy");
-        RestService restService = context.getBean("restService")
+        RestService restService = context.getBean("restService") as RestService
         restService.start();
 
         Signal.handle(new Signal("TERM"), new SignalHandler() {
