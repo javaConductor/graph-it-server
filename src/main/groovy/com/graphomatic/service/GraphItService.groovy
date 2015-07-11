@@ -73,7 +73,7 @@ class GraphItService {
             createGraphItem(gitem)
         }
 
-        /// create Relationship Types
+        /// create Relationship
         def nuRels = [
          new Relationship(name: "Child", type: "simple"),
          new Relationship(name: "Parent", type: "simple"),
@@ -83,18 +83,23 @@ class GraphItService {
             createRelationship(r);
         }
 
-        def testRelationships = [
-                new ItemRelationship(sourceItemId: nuItems[0].id,
-                relatedItemId: nuItems[1].id, ),
-                new GraphItem(title: "David Collins",
-                        position: new Position(x: 200L, y:100L),
-                        data: [:],
-                        images: ['/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg'])
-        ]
+        dbAccess.createItemRelationship(nuItems[0].id,nuItems[1].id,nuRels[0])
 
     }
 
     Relationship createRelationship(Relationship relationship) {
         dbAccess.createRelationship(relationship);
+    }
+
+    List<ItemRelationship> getRelationshipsForItems(List<String> itemIds) {
+        dbAccess.getRelationshipForItems(itemIds);
+    }
+
+    ItemRelationship getItemRelationship(String id) {
+        dbAccess.getItemRelationship(id)
+    }
+
+    boolean removeItemRelationship(String id) {
+        dbAccess.removeItemRelationship(id)
     }
 }

@@ -2,6 +2,7 @@ package com.graphomatic.service
 
 import com.graphomatic.Utils
 import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.ItemRelationship
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import net.sf.json.groovy.JsonSlurper
@@ -21,6 +22,41 @@ class RestService {
     def createService() {
 
         GServ gServ = new GServ();
+        def graphRelationshipRes = gServ.resource("item-relationship") {
+
+            get(':id'){ id ->
+                ItemRelationship itemRelationship = graphItService.getItemRelationship(id);
+                writeJson itemRelationship
+            }
+
+            delete(':id'){ id ->
+                boolean ok = graphItService.removeItemRelationship(id);
+                writeJson (   [ success : ok] )
+            }
+
+            ///TODO POST is not recognized -- 404 !!!
+            /// receives item ids and returns all their relationships
+            post(""){ List<String> itemIds ->
+                List<ItemRelationship> items = graphItService.getRelationshipsForItems(itemIds)
+
+                writeJson items.collect { itemRelationship ->
+                    [links: links(itemRelationship)] + Utils.persistentFields(itemRelationship.properties)
+                }
+            }
+
+            link{ itemRelationship ->
+                [
+                        [rel: "self",
+                         href: "/item-relationship/${itemRelationship.id}",
+                         method: "GET"],
+
+                        [rel   : "delete",
+                         href  : "/item-relationship/${itemRelationship.id}",
+                         method: "DELETE"]
+                ]
+
+            }
+        }
         def graphItemRes = gServ.resource("graph-item") {
 
             /// get all graph-items
@@ -85,7 +121,12 @@ class RestService {
             conversion(GraphItem) { istream ->
                 new JsonSlurper().parse(istream).properties as GraphItem
             }
+            conversion(List.class) { istream ->
+                StringReader sr = new StringReader(istream);
+                sr.text.split(',')
+            }
             resource graphItemRes
+            resource graphRelationshipRes
         }
     }
 
