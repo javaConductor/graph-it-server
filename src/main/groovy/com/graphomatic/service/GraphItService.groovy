@@ -102,4 +102,8 @@ class GraphItService {
     boolean removeItemRelationship(String id) {
         dbAccess.removeItemRelationship(id)
     }
+
+    List<Relationship> getRelationshipDefs() {
+        dbAccess.getRelationshipDefs();
+    }
 }

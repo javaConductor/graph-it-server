@@ -3,6 +3,7 @@ package com.graphomatic.service
 import com.graphomatic.Utils
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ItemRelationship
+import com.graphomatic.domain.Relationship
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import net.sf.json.groovy.JsonSlurper
@@ -22,7 +23,22 @@ class RestService {
     def createService() {
 
         GServ gServ = new GServ();
-        def graphRelationshipRes = gServ.resource("item-relationship") {
+        def graphRelationshipRes = gServ.resource("relationship") {
+            get(""){
+                List<Relationship> relationships = graphItService.getRelationshipDefs();
+                writeJson relationships.collect { relationship ->
+                    [_links: links(relationship)] + Utils.persistentFields(relationship.properties)
+                }
+            }
+            links{ relationship ->
+                [
+                        [rel: "self",
+                         href: "/relationship/${relationship.id}",
+                         method: "GET"]
+                ]
+            }
+        }
+        def graphItemRelationshipRes = gServ.resource("item-relationship") {
 
             get(':id'){ id ->
                 ItemRelationship itemRelationship = graphItService.getItemRelationship(id);
@@ -34,17 +50,16 @@ class RestService {
                 writeJson (   [ success : ok] )
             }
 
-            ///TODO POST is not recognized -- 404 !!!
             /// receives item ids and returns all their relationships
             post(""){ List<String> itemIds ->
                 List<ItemRelationship> items = graphItService.getRelationshipsForItems(itemIds)
 
                 writeJson items.collect { itemRelationship ->
-                    [links: links(itemRelationship)] + Utils.persistentFields(itemRelationship.properties)
+                    [_links: links(itemRelationship)] + Utils.persistentFields(itemRelationship.properties)
                 }
             }
 
-            link{ itemRelationship ->
+            links{ itemRelationship ->
                 [
                         [rel: "self",
                          href: "/item-relationship/${itemRelationship.id}",
@@ -54,7 +69,6 @@ class RestService {
                          href  : "/item-relationship/${itemRelationship.id}",
                          method: "DELETE"]
                 ]
-
             }
         }
         def graphItemRes = gServ.resource("graph-item") {
@@ -121,11 +135,11 @@ class RestService {
             conversion(GraphItem) { istream ->
                 new JsonSlurper().parse(istream).properties as GraphItem
             }
-            conversion(List.class) { istream ->
-                StringReader sr = new StringReader(istream);
-                sr.text.split(',')
+            conversion(List.class) { InputStream istream ->
+                istream.getText().split(',') as List<String>
             }
             resource graphItemRes
+            resource graphItemRelationshipRes
             resource graphRelationshipRes
         }
     }

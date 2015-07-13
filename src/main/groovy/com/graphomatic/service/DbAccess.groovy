@@ -151,4 +151,8 @@ class DbAccess {
             return false
         }
     }
+
+    List<Relationship> getRelationshipDefs() {
+        mongo.findAll(Relationship);
+    }
 }
