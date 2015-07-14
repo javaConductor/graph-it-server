@@ -107,7 +107,7 @@ class RestService {
             /// Create
             post('') { GraphItem graphItem ->
                 GraphItem g = graphItService.createGraphItem(graphItem)
-                writeJson Utils.persistentFields(g) + [links: links(g)]
+                writeJson Utils.persistentFields(g.properties) + [links: links(g)]
             }
 
             links { GraphItem graphItem ->
@@ -133,7 +133,8 @@ class RestService {
         }.http {
             cors( "/", allowAll(3600) )
             conversion(GraphItem) { istream ->
-                new JsonSlurper().parse(istream).properties as GraphItem
+                def json = new JsonSlurper().parse(istream);
+                new GraphItem(position: json.position, title: json.title, categories: json.categories);
             }
             conversion(List.class) { InputStream istream ->
                 istream.getText().split(',') as List<String>
