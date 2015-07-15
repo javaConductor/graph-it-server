@@ -1,5 +1,6 @@
 package com.graphomatic.service
 
+import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
@@ -25,6 +26,14 @@ class DbAccess {
 
     /**
      *
+     * @return List of ALL Categories
+     */
+    List<Category> getCategories(){
+        mongo.findAll(Category.class )
+    }
+
+    /**
+     *
      * @return
      */
     List<GraphItem> getAllGraphItems(){
@@ -45,6 +54,27 @@ class DbAccess {
                 position: new Position(x:x,y:y))
         mongo.insert( g )
         g
+    }
+
+    /**
+     *
+     * @param graphItem
+     * @return
+     */
+    List<Category> createCategories(List<Category> categories ){
+        categories.collect { category ->
+            createCategory (category)
+        }
+    }
+
+    /**
+     *
+     * @param graphItem
+     * @return
+     */
+    Category createCategory(Category category ){
+        mongo.insert( category )
+        category
     }
 
     /**
@@ -154,5 +184,9 @@ class DbAccess {
 
     List<Relationship> getRelationshipDefs() {
         mongo.findAll(Relationship);
+    }
+
+    Category getCategory(String id) {
+        mongo.findById(id, Category);
     }
 }

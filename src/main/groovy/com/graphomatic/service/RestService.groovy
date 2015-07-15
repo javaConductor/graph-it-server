@@ -1,6 +1,7 @@
 package com.graphomatic.service
 
 import com.graphomatic.Utils
+import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Relationship
@@ -23,6 +24,27 @@ class RestService {
     def createService() {
 
         GServ gServ = new GServ();
+        def graphCategoryRes = gServ.resource("category") {
+            get(""){
+                List<Category> categories = graphItService.getCategories();
+                writeJson categories.collect { category ->
+                    [_links: links(category)] + Utils.persistentFields(category.properties)
+                }
+            }
+
+            get(":id"){
+                Category category = graphItService.getCategory(id);
+                writeJson(Utils.persistentFields(category.properties) + [_links: links(category)])
+            }
+
+            links{ category ->
+                [
+                        [rel: "self",
+                         href: "/category/${category.id}",
+                         method: "GET"]
+                ]
+            }
+        }
         def graphRelationshipRes = gServ.resource("relationship") {
             get(""){
                 List<Relationship> relationships = graphItService.getRelationshipDefs();
@@ -142,6 +164,7 @@ class RestService {
             resource graphItemRes
             resource graphItemRelationshipRes
             resource graphRelationshipRes
+            resource graphCategoryRes
         }
     }
 

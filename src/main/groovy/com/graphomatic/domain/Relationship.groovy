@@ -11,7 +11,7 @@ class Relationship {
     String name;
     String reversedName;// mainly for when  type=2-way
     String type;
-    String[] categories;
+    List<Category> categories;
     int priority = 1; //0 -> 10  where lowest number has greater priority and is displayed before higher priorities
 }
 

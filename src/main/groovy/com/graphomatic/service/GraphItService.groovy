@@ -1,5 +1,6 @@
 package com.graphomatic.service
 
+import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
@@ -23,6 +24,14 @@ class GraphItService {
                 log.error("Error creating test data.", e)
             }
         }
+    }
+
+    List<Category> getCategories() {
+        return dbAccess.getCategories();
+    }
+
+    Category getCategory(id) {
+        return dbAccess.getCategory(id);
     }
 
     GraphItem getGraphItem(String id) {
@@ -58,14 +67,25 @@ class GraphItService {
     }
 
     def createTestData() {
+
+        def categories = [
+                new Category(name: "People",parent: null),
+                new Category(name: "Family",parent: null),
+                new Category(name: "Music",parent: null)
+        ];
+
+        List<Category> nuCategories = createCategories(categories);
+
         def testData = [
                 new GraphItem(title: "Lee Collins",
                         position: new Position(x: 100L, y:100L),
                         data: [:],
+                        categories: [nuCategories[0]],
                         images: ['/images/manAndWomanBlackLight.jpg']),
                 new GraphItem(title: "David Collins",
                         position: new Position(x: 200L, y:100L),
                         data: [:],
+                        categories: [nuCategories[0]],
                         images: ['/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg'])
         ]
 
@@ -75,8 +95,8 @@ class GraphItService {
 
         /// create Relationship
         def nuRels = [
-         new Relationship(name: "Child", type: "simple"),
-         new Relationship(name: "Parent", type: "simple"),
+         new Relationship(name: "Child", type: "simple", categories: [nuCategories[1]]),
+         new Relationship(name: "Parent", type: "simple", categories: [nuCategories[1]]),
         ]
 
         nuRels.each { r ->
@@ -85,6 +105,10 @@ class GraphItService {
 
         dbAccess.createItemRelationship(nuItems[0].id,nuItems[1].id,nuRels[0])
 
+    }
+
+    List<Category> createCategories(List<Category> categories) {
+        dbAccess.createCategories(categories);
     }
 
     Relationship createRelationship(Relationship relationship) {
