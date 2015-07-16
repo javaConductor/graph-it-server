@@ -4,6 +4,7 @@ import com.graphomatic.Utils
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ItemRelationship
+import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
@@ -61,6 +62,13 @@ class RestService {
             }
         }
         def graphItemRelationshipRes = gServ.resource("item-relationship") {
+
+            get(''){ ->
+                List<ItemRelationship> itemRelationships = graphItService.getAllItemRelationships();
+                writeJson itemRelationships.collect { itemRelationship ->
+                    [_links: links(itemRelationship)] + Utils.persistentFields(itemRelationship.properties)
+                }
+            }
 
             get(':id'){ id ->
                 ItemRelationship itemRelationship = graphItService.getItemRelationship(id);
@@ -129,7 +137,7 @@ class RestService {
             /// Create
             post('') { GraphItem graphItem ->
                 GraphItem g = graphItService.createGraphItem(graphItem)
-                writeJson Utils.persistentFields(g.properties) + [links: links(g)]
+                writeJson Utils.persistentFields(g.properties) + [_links: links(g)]
             }
 
             links { GraphItem graphItem ->
@@ -156,7 +164,12 @@ class RestService {
             cors( "/", allowAll(3600) )
             conversion(GraphItem) { istream ->
                 def json = new JsonSlurper().parse(istream);
-                new GraphItem(position: json.position, title: json.title, categories: json.categories);
+                Position p = new Position(x: json.position.x, y: json.position.y);
+
+                List<Category> categories = json.categories.collect{ category ->
+                    new Category(id: category.id, name: category.name);
+                }
+                new GraphItem(position: p, title: json.title, categories: categories);
             }
             conversion(List.class) { InputStream istream ->
                 istream.getText().split(',') as List<String>

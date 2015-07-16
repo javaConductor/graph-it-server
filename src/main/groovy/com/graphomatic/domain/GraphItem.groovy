@@ -15,7 +15,7 @@ class GraphItem {
     String[] images;
     Position position;
 
-    ArrayList<Category> categories;
+    List<Category> categories;
     ArrayList<String> notes;
     ArrayList<DataElement> data;
 }

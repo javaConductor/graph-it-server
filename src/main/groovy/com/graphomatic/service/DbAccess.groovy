@@ -189,4 +189,8 @@ class DbAccess {
     Category getCategory(String id) {
         mongo.findById(id, Category);
     }
+
+    List<ItemRelationship> getAllItemRelationships() {
+        mongo.findAll(ItemRelationship);
+    }
 }

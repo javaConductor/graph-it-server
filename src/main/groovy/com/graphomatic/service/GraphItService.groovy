@@ -115,6 +115,9 @@ class GraphItService {
         dbAccess.createRelationship(relationship);
     }
 
+    List<ItemRelationship> getAllItemRelationships( ) {
+        dbAccess.getAllItemRelationships();
+    }
     List<ItemRelationship> getRelationshipsForItems(List<String> itemIds) {
         dbAccess.getRelationshipForItems(itemIds);
     }
