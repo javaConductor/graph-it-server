@@ -2,15 +2,19 @@ package com.graphomatic.service
 
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.ImageData
+import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import groovy.util.logging.Slf4j
+import org.springframework.stereotype.Service
 
 /**
  * Created by lcollins on 6/28/2015.
  */
 @Slf4j
+@Service
 class GraphItService {
     DbAccess dbAccess
 
@@ -79,19 +83,35 @@ class GraphItService {
         def testData = [
                 new GraphItem(title: "Lee Collins",
                         position: new Position(x: 100L, y:100L),
-                        data: [:],
+                        data: [],
                         categories: [nuCategories[0]],
-                        images: ['/images/manAndWomanBlackLight.jpg']),
+                        images: [] ),
                 new GraphItem(title: "David Collins",
                         position: new Position(x: 200L, y:100L),
-                        data: [:],
+                        data: [],
                         categories: [nuCategories[0]],
-                        images: ['/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg'])
+                        images: [] )
         ]
 
         def nuItems = testData.collect { gitem ->
             createGraphItem(gitem)
         }
+
+        String folder="C:/Users/lcollins/git/graph-it/"
+        createItemImage(nuItems[0].id,
+                new FileInputStream(
+                        new File(folder,
+                                '/images/manAndWomanBlackLight.jpg')
+                ), "image/jpeg"
+        )
+
+        createItemImage(nuItems[1].id,
+                new FileInputStream(
+                        new File(folder,
+                                '/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg')
+                ), "image/jpeg"
+        )
+
 
         /// create Relationship
         def nuRels = [
@@ -132,5 +152,46 @@ class GraphItService {
 
     List<Relationship> getRelationshipDefs() {
         dbAccess.getRelationshipDefs();
+    }
+
+    ItemRelationship createItemRelationship(ItemRelationship itemRelationship) {
+        dbAccess.createItemRelationship(itemRelationship.sourceItemId,
+                itemRelationship.relatedItemId,
+                itemRelationship.relationship);
+    }
+
+    Relationship getRelationshipDef(String id) {
+        dbAccess.getRelationshipDef(id)
+    }
+
+    ImageData createItemImage(String  graphItemId,
+                              InputStream inputStream,
+                              String contentType) {
+        dbAccess.createItemImage(graphItemId,contentType,inputStream)
+    }
+
+    /**
+     *
+     * @param graphItemId
+     * @param imageId
+     * @return
+     */
+    GraphItem setAsMainImage(String graphItemId, String imageId) {
+        GraphItem graphItem = dbAccess.getGraphItem(graphItemId)
+        if (! graphItemId)
+            return null
+
+        def both = graphItem.images.split { img ->
+            img.id == imageId
+        }
+        if(both[0].empty)
+            return null
+        graphItem.images = (both[0] ) + ( both[1] )
+
+        dbAccess.update(graphItem)
+    }
+
+    ImageData getItemData(String path) {
+        dbAccess.getImageData(path)
     }
 }

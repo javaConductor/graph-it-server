@@ -12,10 +12,11 @@ class GraphItem {
     @Id
     String id;
     String title;
-    String[] images;
+    List<ItemImage> images;
     Position position;
 
     List<Category> categories;
-    ArrayList<String> notes;
-    ArrayList<DataElement> data;
+    List<String> notes;
+    List<DataElement> data;
+
 }

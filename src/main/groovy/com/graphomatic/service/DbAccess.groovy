@@ -2,15 +2,21 @@ package com.graphomatic.service
 
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.ImageData
+import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
+import com.mongodb.gridfs.GridFSFile
 import groovy.util.logging.Slf4j
+import org.bson.BSON
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.gridfs.GridFsResource
 import org.springframework.stereotype.Repository
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 
 /**
  * Created by lcollins on 6/28/2015.
@@ -20,8 +26,10 @@ import org.springframework.stereotype.Repository
 class DbAccess {
 
     MongoTemplate mongo;
-    DbAccess(MongoTemplate mongo){
+    GridFsTemplate gridFsTemplate
+    DbAccess(MongoTemplate mongo, GridFsTemplate gridFsTemplate){
         this.mongo = mongo
+        this.gridFsTemplate = gridFsTemplate
     }
 
     /**
@@ -102,6 +110,7 @@ class DbAccess {
      * @return
      */
     boolean removeGraphItem(String id){
+        //TODO mark as deleted until no relationships then we cam remove
         mongo.remove(new Query(Criteria.where('id').is(id)))
         return true
     }
@@ -166,6 +175,10 @@ class DbAccess {
                         Criteria.where("relatedItemId").in(itemIds))), ItemRelationship.class)
     }
 
+    List<ItemRelationship> getAllItemRelationships() {
+        mongo.findAll(ItemRelationship);
+    }
+
     ItemRelationship getItemRelationship(String id) {
         mongo.findById(id,ItemRelationship)
     }
@@ -186,11 +199,62 @@ class DbAccess {
         mongo.findAll(Relationship);
     }
 
+    Relationship getRelationshipDef(String id) {
+        mongo.findById(id, Relationship)
+    }
+
     Category getCategory(String id) {
         mongo.findById(id, Category);
     }
 
-    List<ItemRelationship> getAllItemRelationships() {
-        mongo.findAll(ItemRelationship);
+    String GRAPH_ITEM_IMAGE_FOLDER = "/graph-item-images"
+    /**
+     * Create an image in GridFs for a graphItem
+     * @param graphItemId
+     * @param contentType
+     * @param inputStream
+     * @return
+     */
+    ImageData createItemImage(String graphItemId, String contentType, InputStream inputStream ) {
+        UUID uuid = UUID.randomUUID()
+        String fname = uuid.toString()
+        GridFSFile gfile = gridFsTemplate.store( inputStream, "$GRAPH_ITEM_IMAGE_FOLDER/$graphItemId/$fname", contentType )
+
+        // create it
+        def newImage = new ItemImage(id: fname, graphItemId: graphItemId, mimeType: contentType, imagePath: gfile.filename)
+        // add it to the item
+        addItemImage(newImage);
+        // return the imageData
+        getImageData(gfile.filename)
     }
+
+    /**
+     *
+     * @param itemImage
+     * @return GraphItem containing the new ItemImage
+     */
+    GraphItem addItemImage(ItemImage itemImage){
+        if (! itemImage.graphItemId){
+            throw new IllegalArgumentException("Graph item id must be present in ItemImage.")
+        }
+        mongo.findAndModify(
+                new Query(Criteria.where('id').is(itemImage.graphItemId)),
+                new Update().addToSet("images", itemImage ),
+                GraphItem)
+    }
+
+    /**
+     *
+     * @param imagePath
+     * @return Returns file at $imagePath
+     */
+    ImageData getImageData( String imagePath ) {
+        GridFsResource resource =  gridFsTemplate.getResource("$imagePath")
+        String id = imagePath.split('/').last()
+        new ImageData(id: id,
+                inputStream: resource.inputStream,
+                contentType: resource.contentType,
+                size: resource.contentLength())
+    }
+
 }

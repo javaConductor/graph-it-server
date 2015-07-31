@@ -8,9 +8,8 @@ import com.mongodb.Mongo
 import com.mongodb.MongoClient
 import com.mongodb.ServerAddress
 import org.springframework.beans.factory.config.BeanDefinition
-import org.springframework.data.mongodb.MongoDbFactory
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory
+import org.springframework.data.mongodb.gridfs.GridFsTemplate
 
 /**
  * Created by javaConductor on Jun 11.
@@ -34,21 +33,35 @@ beans {
             'host':properties["mongo.host"],
             'port':properties["mongo.port"] as int,
             'id':"mongoDb");
+
+
     mongo.'db-factory'(
             'dbname':properties["mongo.databaseName"],
             'mongo-ref':"mongoDb",
             'id':"mongoDbFactory");
 
+    mongo.'mapping-converter'(
+            'id': "converter",
+            'db-factory-ref': ('mongoDbFactory') );
 
     mongoTemplate(MongoTemplate){ beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('mongoDbFactory')
+            ref('mongoDbFactory'),
+            ref('converter')
+        ]
+    }
+
+    gridFsTemplate(GridFsTemplate){ beanDefinition ->
+        beanDefinition.constructorArgs = [
+            ref(mongoDbFactory),
+            ref(converter)
         ]
     }
 
     dbAccess(DbAccess){beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('mongoTemplate')
+            ref(mongoTemplate),
+            ref('gridFsTemplate')
         ]
     }
 

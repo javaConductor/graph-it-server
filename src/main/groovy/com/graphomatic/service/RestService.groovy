@@ -3,11 +3,14 @@ package com.graphomatic.service
 import com.graphomatic.Utils
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.ImageData
+import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
+import io.github.javaconductor.gserv.converters.FormData
 import net.sf.json.groovy.JsonSlurper
 
 /**
@@ -26,36 +29,36 @@ class RestService {
 
         GServ gServ = new GServ();
         def graphCategoryRes = gServ.resource("category") {
-            get(""){
+            get("") {
                 List<Category> categories = graphItService.getCategories();
                 writeJson categories.collect { category ->
                     [_links: links(category)] + Utils.persistentFields(category.properties)
                 }
             }
 
-            get(":id"){
+            get(":id") {
                 Category category = graphItService.getCategory(id);
                 writeJson(Utils.persistentFields(category.properties) + [_links: links(category)])
             }
 
-            links{ category ->
+            links { category ->
                 [
-                        [rel: "self",
+                        [rel : "self",
                          href: "/category/${category.id}",
                          method: "GET"]
                 ]
             }
         }
         def graphRelationshipRes = gServ.resource("relationship") {
-            get(""){
+            get("") {
                 List<Relationship> relationships = graphItService.getRelationshipDefs();
                 writeJson relationships.collect { relationship ->
                     [_links: links(relationship)] + Utils.persistentFields(relationship.properties)
                 }
             }
-            links{ relationship ->
+            links { relationship ->
                 [
-                        [rel: "self",
+                        [rel : "self",
                          href: "/relationship/${relationship.id}",
                          method: "GET"]
                 ]
@@ -63,25 +66,25 @@ class RestService {
         }
         def graphItemRelationshipRes = gServ.resource("item-relationship") {
 
-            get(''){ ->
+            get('') { ->
                 List<ItemRelationship> itemRelationships = graphItService.getAllItemRelationships();
                 writeJson itemRelationships.collect { itemRelationship ->
                     [_links: links(itemRelationship)] + Utils.persistentFields(itemRelationship.properties)
                 }
             }
 
-            get(':id'){ id ->
+            get(':id') { id ->
                 ItemRelationship itemRelationship = graphItService.getItemRelationship(id);
                 writeJson itemRelationship
             }
 
-            delete(':id'){ id ->
+            delete(':id') { id ->
                 boolean ok = graphItService.removeItemRelationship(id);
-                writeJson (   [ success : ok] )
+                writeJson([success: ok])
             }
 
             /// receives item ids and returns all their relationships
-            post(""){ List<String> itemIds ->
+            post("for-items") { List<String> itemIds ->
                 List<ItemRelationship> items = graphItService.getRelationshipsForItems(itemIds)
 
                 writeJson items.collect { itemRelationship ->
@@ -89,9 +92,15 @@ class RestService {
                 }
             }
 
-            links{ itemRelationship ->
+            /// creates item relationship
+            post("") { ItemRelationship rel ->
+                ItemRelationship itemRelationship = graphItService.createItemRelationship(rel);
+                writeJson Utils.persistentFields(itemRelationship.properties) + [_links: links(itemRelationship)]
+            }
+
+            links { itemRelationship ->
                 [
-                        [rel: "self",
+                        [rel : "self",
                          href: "/item-relationship/${itemRelationship.id}",
                          method: "GET"],
 
@@ -101,62 +110,104 @@ class RestService {
                 ]
             }
         }
-        def graphItemRes = gServ.resource("graph-item") {
+        def graphItemImageRes = gServ.resource("graph-item-images") {
 
-            /// get all graph-items
-            get("") { ->
-                writeJson graphItService.allGraphItems.collect { graphItem ->
-                    [links: links(graphItem)] + Utils.persistentFields(graphItem.properties)
+            /// get graph-items main image
+            get("/:graphItemId/:imageId") { graphItemId, imageId ->
+                ImageData imageData = graphItService.getItemData("/graph-item-images/$graphItemId/$imageId" )
+                if (!imageData){
+                    error  404, "No such image."
+                }else {
+                    contentType "${imageData.contentType}"
+                    writeFrom imageData.inputStream
                 }
             }
 
-            /// get a graphitem
-            get(':id') { id ->
-                GraphItem g = graphItService.getGraphItem(id)
-                writeJson Utils.persistentFields(g.properties) + [links: links(g)]
+            /// post
+            post(":graphItemId/order/main/:imageId") {is, graphItemId, imageId ->
+                GraphItem graphItem = graphItService.setAsMainImage(graphItemId, imageId)
+                if(graphItem) {
+                    writeJson asMap(graphItem)
+                }else{
+                    error 404, "No such item [$graphItemId] or image [$imageId]"
+                }
             }
 
-            /// remove a graphitem
-            delete(':id') { id ->
-                writeJson { ok : graphItService.removeGraphItem(id) }
-            }
+            /// create a new image for this graph-item
+            post(":graphItemId") {FormData formData, String graphItemId ->
 
-            /// Update
-            put('') { GraphItem graphItem ->
-                GraphItem g = graphItService.updateGraphItem(graphItem)
-                writeJson Utils.persistentFields(g.properties) + [links: links(g)]
-            }
-
-            /// Update item position
-            put('/:id/position/:x:Number/:y:Number') {dummy, graphItemId, x, y ->
-                GraphItem g = graphItService.updateGraphItemPosition(graphItemId, x as int, y as int)
-                log.debug("graphItem moved to: $x,  $y");
-                writeJson Utils.persistentFields(g.properties) + [links: links(g)]
-            }
-
-            /// Create
-            post('') { GraphItem graphItem ->
-                GraphItem g = graphItService.createGraphItem(graphItem)
-                writeJson Utils.persistentFields(g.properties) + [_links: links(g)]
-            }
-
-            links { GraphItem graphItem ->
-                [
-                        [rel: "self", href: "/graph-item/${graphItem.id}", method: "GET"],
-                        [rel: "update", href: "/graph-item/", method: "PUT"],
-                        [rel   : "updatePosition",
-                         href  : "/graph-item/" +
-                                 "${graphItem.id}/position/" +
-                                 ":x/" +
-                                 ":y",
-                         method: "PUT"],
-                        [rel   : "delete",
-                         href  : "/graph-item/${graphItem.id}",
-                         method: "DELETE"]
-                ]
-
+                if(!formData.files || formData.files.empty) {
+                    error 400, "No file uploaded!"
+                }else {
+                    ByteArrayInputStream is = new ByteArrayInputStream(formData.files[0].content)
+                    ImageData imageData = graphItService.createItemImage(graphItemId, is, formData.files[0].contentType, index)
+                    contentType "${imageData.contentType}"
+                    writeFrom imageData.inputStream
+                }
             }
         }
+
+    def prepareGraphItem = {GraphItem  graphItem ->
+        Map m = Utils.persistentFields(graphItem.properties)
+        m
+    }
+
+    def graphItemRes = gServ.resource("graph-item") {
+
+        /// get all graph-items
+        get("") { ->
+            writeJson graphItService.allGraphItems.collect { graphItem ->
+                [links: links(graphItem)] + prepareGraphItem(graphItem)
+            }
+        }
+
+        /// get a graphitem
+        get(':id') { id ->
+            GraphItem g = graphItService.getGraphItem(id)
+            writeJson prepareGraphItem(g) + [links: links(g)]
+        }
+
+        /// remove a graphitem
+        delete(':id') { id ->
+            writeJson { ok : graphItService.removeGraphItem(id) }
+        }
+
+        /// Update
+        put('') { GraphItem graphItem ->
+            GraphItem g = graphItService.updateGraphItem(graphItem)
+            writeJson prepareGraphItem(g) + [links: links(g)]
+        }
+
+        /// Update item position
+        put('/:id/position/:x:Number/:y:Number') {dummy, graphItemId, x, y ->
+            GraphItem g = graphItService.updateGraphItemPosition(graphItemId, x as int, y as int)
+            log.debug("graphItem moved to: $x,  $y");
+            writeJson prepareGraphItem(g) + [links: links(g)]
+        }
+
+        /// Create
+        post('') { GraphItem graphItem ->
+            GraphItem g = graphItService.createGraphItem(graphItem)
+            writeJson prepareGraphItem(g) + [_links: links(g)]
+        }
+
+        links { GraphItem graphItem ->
+            [
+                    [rel: "self", href: "/graph-item/${graphItem.id}", method: "GET"],
+                    [rel: "update", href: "/graph-item/", method: "PUT"],
+                    [rel   : "updatePosition",
+                     href  : "/graph-item/" +
+                             "${graphItem.id}/position/" +
+                             ":x/" +
+                             ":y",
+                     method: "PUT"],
+                    [rel   : "delete",
+                     href  : "/graph-item/${graphItem.id}",
+                     method: "DELETE"]
+            ]
+
+        }
+    }
 
         gServ.plugins{
             plugin("cors",[:])
@@ -171,6 +222,13 @@ class RestService {
                 }
                 new GraphItem(position: p, title: json.title, categories: categories);
             }
+            conversion(ItemRelationship) { istream ->
+                def json = new JsonSlurper().parse(istream);
+                new ItemRelationship(
+                    sourceItemId: json.sourceItemId,
+                    relatedItemId: json.relatedItemId,
+                    relationship: graphItService.getRelationshipDef(json.relationshipId))
+            }
             conversion(List.class) { InputStream istream ->
                 istream.getText().split(',') as List<String>
             }
@@ -178,6 +236,7 @@ class RestService {
             resource graphItemRelationshipRes
             resource graphRelationshipRes
             resource graphCategoryRes
+            resource graphItemImageRes
         }
     }
 
