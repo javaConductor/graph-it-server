@@ -1,0 +1,46 @@
+Data Types
+-	Multiple inheritance ???
+-	Can define required data elements and multiple-choice data elements.
+
+Relationships as DataElements
+-	Can see relationships when viewing data elements for an item
+-	Value of data element is related item title
+-	Click on data element value to bring the item into view
+
+Relationship Types:
+-	2 way relationships
+	-	One side may be calculated based on the other side
+-	Calculated relationships
+	-	Upgradable
+	-	Potential relationships (based on item type and/or categories)
+-	Time-based relationships
+	-	eg. Employed At, Married To, Lives At,
+	-	can be current or historic
+	-	can be terminated manually or based on time
+
+
+Item/Relationship Visibility
+-	Security settings for items
+	-	Access for: Owner, Group, All
+	-	Access modes: Update, Create, Delete, View
+-	Must be able to change item ownership
+
+Item Groups
+-	Give an entire group of items a single relationship to some item or group.
+-	Made of items
+-	Types:
+	-	Member-calculated eg:
+		-	java Software Group => Apps where language == "Java"
+		-	JVM Software Group => Apps where language in ( "Groovy", "Java", "Scala", "Clojure", "JRuby", "Jython" )
+		-	IBM Employees => Person where employer ==  "IBM"
+	-
+
+=============================================
+User stuff
+=============================================
+for authorization, we need:
+ 	username, password, email
+
+Other user based stuff:
+	views,
+	edit history

@@ -142,6 +142,7 @@ class RestService {
                     ByteArrayInputStream is = new ByteArrayInputStream(formData.files[0].content)
                     ImageData imageData = graphItService.createItemImage(graphItemId, is, formData.files[0].contentType, index)
                     contentType "${imageData.contentType}"
+                    location "/graph-item-images/$graphItemId/${imageData.id}"
                     writeFrom imageData.inputStream
                 }
             }
@@ -185,6 +186,30 @@ class RestService {
             writeJson prepareGraphItem(g) + [links: links(g)]
         }
 
+        /// Create from form
+        post('/form') { FormData formData ->
+            String title = formData.getValue("title")
+            String image = formData.files[0]
+            String cat = formData.getValue("category")
+            Position pos =  (
+                        formData.getValue("position.x") && formData.getValue("position.y")
+                        ) ?  new Position(
+                                x: formData.getValue("position.x") as long,
+                                y: formData.getValue("position.y") as long)
+                          : new Position(x:100L, y:200L);
+
+            Category category = graphItService.getCategory(cat)
+            GraphItem g = graphItService.createGraphItem( new GraphItem(title: title,
+                    images: [],
+                    position : pos,
+                    categories: category ? [category] : []))
+            if(formData.files) {
+                ByteArrayInputStream is = new ByteArrayInputStream(formData.files[0].content)
+                ImageData imageData = graphItService.createItemImage(g.id, is, formData.files[0].contentType)
+                g= graphItService.getGraphItem(g.id)
+            }
+            writeJson prepareGraphItem(g) + [_links: links(g)]
+        }
         /// Create
         post('') { GraphItem graphItem ->
             GraphItem g = graphItService.createGraphItem(graphItem)

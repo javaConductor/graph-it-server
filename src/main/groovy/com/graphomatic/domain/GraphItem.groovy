@@ -13,7 +13,7 @@ class GraphItem {
     String id;
     String title;
     List<ItemImage> images;
-    Position position;
+    Position position = new Position(x:100, y: 200);
 
     List<Category> categories;
     List<String> notes;

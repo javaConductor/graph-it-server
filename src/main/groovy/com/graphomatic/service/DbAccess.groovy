@@ -9,7 +9,6 @@ import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.mongodb.gridfs.GridFSFile
 import groovy.util.logging.Slf4j
-import org.bson.BSON
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -25,6 +24,7 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 @Slf4j
 class DbAccess {
 
+    final static String GRAPH_ITEM_IMAGE_FOLDER = "/graph-item-images"
     MongoTemplate mongo;
     GridFsTemplate gridFsTemplate
     DbAccess(MongoTemplate mongo, GridFsTemplate gridFsTemplate){
@@ -47,7 +47,6 @@ class DbAccess {
     List<GraphItem> getAllGraphItems(){
         //TODO fix this - findAll should work!
         mongo.find(Query.query(Criteria.where("_id").exists(true)), GraphItem.class )
-//        mongo.findAll( GraphItem.class )
     }
 
     /**
@@ -207,7 +206,6 @@ class DbAccess {
         mongo.findById(id, Category);
     }
 
-    String GRAPH_ITEM_IMAGE_FOLDER = "/graph-item-images"
     /**
      * Create an image in GridFs for a graphItem
      * @param graphItemId
