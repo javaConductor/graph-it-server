@@ -72,6 +72,8 @@ class GraphItService {
 
     def createTestData() {
 
+
+        //todo FIX THIS   -- Family->parent == People
         def categories = [
                 new Category(name: "People",parent: null),
                 new Category(name: "Family",parent: null),
@@ -193,5 +195,13 @@ class GraphItService {
 
     ImageData getItemData(String path) {
         dbAccess.getImageData(path)
+    }
+//
+//    GraphItem addGraphItemNote(String graphItemId, String note) {
+//        dbAccess.addItemNote(graphItemId, note);
+//    }
+
+    GraphItem updateGraphItemNotes(String graphItemId , String notes) {
+        dbAccess.updateGraphItemNotes(graphItemId, notes)
     }
 }

@@ -1,6 +1,5 @@
 package com.graphomatic.domain
 
-import com.mongodb.DBObject
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -16,7 +15,6 @@ class GraphItem {
     Position position = new Position(x:100, y: 200);
 
     List<Category> categories;
-    List<String> notes;
+    String notes
     List<DataElement> data;
-
 }

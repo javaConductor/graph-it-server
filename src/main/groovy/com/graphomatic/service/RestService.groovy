@@ -186,10 +186,17 @@ class RestService {
             writeJson prepareGraphItem(g) + [links: links(g)]
         }
 
+        /// Add item note
+        put('/:id/notes') {String notes, graphItemId ->
+            GraphItem gOld = graphItService.getGraphItem(graphItemId);
+            GraphItem g = graphItService.updateGraphItemNotes(graphItemId, notes)
+            log.debug("graphItem [$graphItemId] set notes: from [${gOld.notes}] to [${g.notes}].");
+            writeJson prepareGraphItem(g) + [links: links(g)]
+        }
+
         /// Create from form
         post('/form') { FormData formData ->
             String title = formData.getValue("title")
-            String image = formData.files[0]
             String cat = formData.getValue("category")
             Position pos =  (
                         formData.getValue("position.x") && formData.getValue("position.y")

@@ -255,4 +255,21 @@ class DbAccess {
                 size: resource.contentLength())
     }
 
+//
+//    GraphItem addItemNote(String  id, String note) {
+//        mongo.findAndModify(
+//                new Query(Criteria.where('id').is(id)),
+//                new Update().push("notes", note ),
+//                GraphItem)
+//    }
+
+    GraphItem updateGraphItemNotes(String graphItemId, String notes) {
+        GraphItem g = mongo.findAndModify(
+                new Query(Criteria.where('id').is(graphItemId)),
+                new Update().set("notes", notes ),
+                GraphItem)
+        g= getGraphItem(graphItemId)
+        log.debug("DbAccess: item $graphItemId changed notes to [${notes} result: [${g.notes}]]")
+        g
+    }
 }
