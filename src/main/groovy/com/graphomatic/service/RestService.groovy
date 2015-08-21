@@ -4,7 +4,6 @@ import com.graphomatic.Utils
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ImageData
-import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship

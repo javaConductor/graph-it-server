@@ -1,0 +1,57 @@
+{
+  "Categories": [
+    {
+      "name": "Bible",
+      "parent": "ALL",
+      "description": "All things bible."
+    }
+  ],
+  "Relationships": [],
+  "ItemTypes": [
+    {
+      "name": "Verse",
+      "category": ["Bible"],
+      "properties": [
+        { "name": "verseId", "type": "text", "required": true},
+        { "name": "verseText", "type": "text", "required": true}
+      ]
+    },{
+      "name": "LessonElement",
+      "category": ["Bible"],
+      "properties": [
+        { "name": "commentary", "type": "text" },
+        { "name": "verse", "itemType": "Verse", "required": true}
+      ]
+
+    }
+  ],
+  "GroupDefs": [{
+    "name": "Lesson",
+    "groupType" : "simple_static",
+    "validMemberTypes": ["LessonElement"],
+    "groupTemplate": "/templates/lesson.html",
+    "properties": [
+      { "name": "title", "type": "text", "required": true },
+      { "name": "description", "type": "dateTime", "required": true },
+      { "name": "date", "type": "dateTime", "required": true },
+      { "name": "verses", "type": "list", "list":{ "itemType": ["LessonElement"] } ,"required": true}
+    ]
+  },{
+    "name": "VerseSet",
+    "groupType" : "simple_static",
+    "validMemberTypes": ["Verse"],
+    "groupTemplate": "/templates/verses.html",
+    "properties": [
+      { "name": "commentary", "type": "text", "required": true }
+    ]
+  },{
+    "name": "VerseRange",
+    "groupType" : "simple_static",
+    "validMemberTypes": ["Verse"],
+    "groupTemplate": "/templates/verses.html",
+    "properties": [
+      { "name": "verseSpec", "type": "text", "required": true },
+    ]
+  }
+  ]
+}

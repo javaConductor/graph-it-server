@@ -1,5 +1,6 @@
 package com.graphomatic.domain
 
+import com.graphomatic.typesystem.domain.ItemType
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -16,5 +17,7 @@ class GraphItem {
 
     List<Category> categories;
     String notes
-    List<DataElement> data;
+    List<Property> data;
+    String typeName
+    transient ItemType type
 }

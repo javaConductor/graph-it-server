@@ -3,10 +3,13 @@ package com.graphomatic.service
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ImageData
-import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
+import com.graphomatic.typesystem.TypeSystem
+import com.graphomatic.typesystem.domain.Group
+import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
+import com.graphomatic.util.DataLoader
 import groovy.util.logging.Slf4j
 import org.springframework.stereotype.Service
 
@@ -17,9 +20,11 @@ import org.springframework.stereotype.Service
 @Service
 class GraphItService {
     DbAccess dbAccess
+    TypeSystem typeSystem
 
-    def GraphItService(DbAccess dbAccess) {
+    def GraphItService(DbAccess dbAccess, TypeSystem typeSystem) {
         this.dbAccess = dbAccess
+        this.typeSystem = typeSystem
 
         if (! getAllGraphItems().findAll { it }.size()){
             try {
@@ -30,6 +35,9 @@ class GraphItService {
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Category
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     List<Category> getCategories() {
         return dbAccess.getCategories();
     }
@@ -38,8 +46,19 @@ class GraphItService {
         return dbAccess.getCategory(id);
     }
 
+    List<Category> createCategories(List<Category> categories) {
+        dbAccess.createCategories(categories);
+    }
+
+    Category getCategoryByName(String name) {
+        dbAccess.getCategoryByName(name)
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Graph Item
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     GraphItem getGraphItem(String id) {
-        return dbAccess.getGraphItem(id);
+        return readTransform( dbAccess.getGraphItem(id) )
     }
 
     boolean removeGraphItem(String id) {
@@ -47,31 +66,84 @@ class GraphItService {
     }
 
     List<GraphItem> getAllGraphItems() {
-        return dbAccess.getAllGraphItems();
+        return dbAccess.getAllGraphItems().collect( this.&readTransform)
+    }
+    GraphItem setAsMainImage(String graphItemId, String imageId) {
+        GraphItem graphItem = dbAccess.getGraphItem(graphItemId)
+        if (! graphItemId)
+            return null
+
+        def both = graphItem.images.split { img ->
+            img.id == imageId
+        }
+        if(both[0].empty)
+            return null
+        graphItem.images = (both[0] ) + ( both[1] )
+
+        dbAccess.update(graphItem)
+    }
+
+    GraphItem updateGraphItemNotes(String graphItemId , String notes) {
+        dbAccess.updateGraphItemNotes(graphItemId, notes)
+    }
+
+    GraphItem readTransform( GraphItem graphItem ){
+        if(graphItem.typeName)
+            graphItem.type = typeSystem.resolveType(graphItem.typeName)
+    }
+
+    GraphItem writeTransform( GraphItem graphItem ){
+        if(!graphItem.typeName)
+            graphItem.typeName = "Empty"
     }
 
     GraphItem updateGraphItemPosition(String graphItemId, long x, long y) {
         return dbAccess.updatePosition(graphItemId, x, y);
     }
 
-
     GraphItem updateGraphItem(GraphItem graphItem) {
         return dbAccess.update(graphItem);
     }
 
-    GraphItem createGraphItem(String title, Position position) {
-        return dbAccess.createGraphItem(title,
-                position.x,
-                position.y);
-    }
+//    GraphItem createGraphItem(String title, Position position) {
+//        return dbAccess.createGraphItem(title,
+//                position.x,
+//                position.y);
+//    }
 
     GraphItem createGraphItem(GraphItem graphItem) {
-        return dbAccess.createGraphItem(graphItem);
-
+        return dbAccess.createGraphItem(writeTransform(graphItem ));
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Group
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    Group createGroup( Group group){
+        dbAccess.createGroup( group )
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // TestData
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+
+    List testDataFiles = [
+            "sword.data.json"
+    ]
+
+    Map testData = ["Categories":[],
+                    "ItemTypes":[],
+                    "GroupDef":[]
+    ]
     def createTestData() {
 
+        /// Read this from config files
+        DataLoader loader = new DataLoader(this)
+
+        testDataFiles.each { fname ->
+            loader.loadData   new FileInputStream( new File("../$fname") )
+        }
+
+    }
+    def createTestDataOLD() {
 
         //todo FIX THIS   -- Family->parent == People
         def categories = [
@@ -129,14 +201,28 @@ class GraphItService {
 
     }
 
-    List<Category> createCategories(List<Category> categories) {
-        dbAccess.createCategories(categories);
-    }
-
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Relationship
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     Relationship createRelationship(Relationship relationship) {
         dbAccess.createRelationship(relationship);
     }
 
+    Relationship getRelationshipDef(String id) {
+        dbAccess.getRelationshipDef(id)
+    }
+
+    List<Relationship> getRelationshipDefs() {
+        dbAccess.getRelationshipDefs();
+    }
+
+    Relationship getRelationshipDefByName(String name) {
+        dbAccess.getRelationshipDefByName(name)
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Item Relationship
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     List<ItemRelationship> getAllItemRelationships( ) {
         dbAccess.getAllItemRelationships();
     }
@@ -152,18 +238,18 @@ class GraphItService {
         dbAccess.removeItemRelationship(id)
     }
 
-    List<Relationship> getRelationshipDefs() {
-        dbAccess.getRelationshipDefs();
-    }
-
     ItemRelationship createItemRelationship(ItemRelationship itemRelationship) {
         dbAccess.createItemRelationship(itemRelationship.sourceItemId,
                 itemRelationship.relatedItemId,
                 itemRelationship.relationship);
     }
 
-    Relationship getRelationshipDef(String id) {
-        dbAccess.getRelationshipDef(id)
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // ImageData
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ImageData getItemData(String path) {
+        dbAccess.getImageData(path)
     }
 
     ImageData createItemImage(String  graphItemId,
@@ -172,36 +258,35 @@ class GraphItService {
         dbAccess.createItemImage(graphItemId,contentType,inputStream)
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Item Type
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     /**
      *
      * @param graphItemId
      * @param imageId
      * @return
      */
-    GraphItem setAsMainImage(String graphItemId, String imageId) {
-        GraphItem graphItem = dbAccess.getGraphItem(graphItemId)
-        if (! graphItemId)
-            return null
-
-        def both = graphItem.images.split { img ->
-            img.id == imageId
-        }
-        if(both[0].empty)
-            return null
-        graphItem.images = (both[0] ) + ( both[1] )
-
-        dbAccess.update(graphItem)
+    ItemType getItemTypeByName(String name) {
+        ItemType itemType = dbAccess.getItemTypeByName(name)
+        postProcess(itemType)
     }
 
-    ImageData getItemData(String path) {
-        dbAccess.getImageData(path)
+    ItemType getAllItemTypes() {
+        dbAccess.getAllItemTypes().collect( postProcess)
     }
-//
-//    GraphItem addGraphItemNote(String graphItemId, String note) {
-//        dbAccess.addItemNote(graphItemId, note);
-//    }
 
-    GraphItem updateGraphItemNotes(String graphItemId , String notes) {
-        dbAccess.updateGraphItemNotes(graphItemId, notes)
+   ItemType postProcess(ItemType itemType){
+       if(itemType){
+           def inherited
+           inherited = getTypePropertiesAndDefaults( itemType )
+           itemType.defaults = inherited.defaults
+           itemType.dataDefs = inherited.dataDefs
+       }
+       itemType
+   }
+
+    ItemType createItemType(ItemType itemType) {
+        postProcess(dbAccess.createItemType(itemType))
     }
 }

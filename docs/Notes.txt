@@ -44,3 +44,117 @@ for authorization, we need:
 Other user based stuff:
 	views,
 	edit history
+
+=============================================
+Load Initial Categories and Relationships
+=============================================
+
+{
+categories: [
+	{
+		"name" : "People"
+	},
+	{
+		"name" : "Family",
+		"parent" : "People"
+	},
+	{
+		"name" : "Music"
+	}},
+	{
+		"name" : "Location"
+	},
+	{
+		"name" : "Business"
+	},
+	{
+		"name" : "Software"
+	}
+],
+relationships: [
+
+	"Family": {
+		"type": "simple",
+		"categories" : [],
+		"parent": null,
+		"notes: ""
+	},
+
+	"Child": {
+		"type": "simple",
+		"reversedName": "Parent",
+		"categories" : ["Family"],
+		"parent": "Family",
+        "notes: ""
+	},
+
+	"Parent": {
+		"type": "simple",
+		"reversedName": "Child",
+		"categories" : ["Family"],
+		"parent": "Family",
+                                  "notes: ""
+	},
+
+
+
+
+	"Composed Of": {
+		"type": "simple",
+    	"reversedName": "Part Of",
+    	"categories" : [],
+                                 "notes: ""
+	},
+
+	"Part Of": {
+		"type": "simple",
+    	"reversedName": "Composed Of",
+    	"categories" : [],
+    	"parent": "Family",
+                                  "notes: ""
+	},
+
+	"Aggregates": {
+		"type": "simple",
+    	"reversedName": "Child",
+    	"parent": "Uses",
+                                "notes: ""
+	},
+
+	"Uses": {
+		"type": "simple",
+    	"categories" : [],
+                                 "notes: ""
+	},
+
+	"Resides At": {
+		"type": "simple",
+    	"categories" : ["Location"],
+    	"parent": "Family",
+                                  "notes: ""
+	},
+
+	"Located At": {
+		"type": "simple",
+    	"categories" : ["Location"],
+                                           "notes: ""
+	},
+
+	"Calls": {
+		"type": "simple",
+    	"categories" : ["Software"],
+    	"parent": "Uses",
+                                "notes: ""
+	},
+
+	"Called by": {
+		"type": "simple",
+    	"categories" : ["Software"],
+    	"parent": "Uses",
+                               "notes: ""
+	}
+
+],
+
+
+}

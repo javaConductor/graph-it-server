@@ -1,0 +1,118 @@
+{
+  "Categories": [
+    {
+      "name": "Media",
+      "parent": "ALL",
+      "description": "audio video games etc"
+    },
+    {
+      "name": "Audio",
+      "parent": "Media",
+      "description": "all audio objects."
+    },
+    {
+      "name": "Video",
+      "parent": "Media",
+      "description": "all video objects."
+    }],
+  "Relationships": [
+    {"name": "Performed", "type":"simple", "constraintTo":"", "constraintFrom": "" },
+    {"name": "Produced", "type":"simple", "constraintTo":"", "constraintFrom": "" }
+  ],
+  "ItemTypes": [{
+      "name":"Track",
+      "category": ["Audio"],
+      "properties":[
+        {"name": "title", "type": "text", "required": true },
+        {"name": "artist", "relationshipType":"performed", "itemType": ["Person","Artist"]},
+        {"name": "producer", "relationshipType":"produced", "itemType": ["Person","Artist","Producer"]},
+        {"name": "audioClip", "relationshipType":"audioClip", "itemType": "Audio" },
+        {"name": "audioFile", "relationshipType":"audioFile", "itemType": "Audio" },
+        {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
+      ]
+    },
+    {
+      "name":"Artist",
+      "category": "Audio",
+      "properties":[
+        {"name": "name", "type": "text"},
+        {"name": "photos", "relationshipType":["photoOf"], "itemType": ["Image"]},
+        {"name": "groupMembers", "relationshipType":["memberOf"], "itemType": ["Person","GroupMemeber"]}
+      ]
+    },
+    {
+      "name" : "GroupMember" ,
+      "parent":"Person",
+      "properties":[
+        {"name": "contribution", "type": "text"}
+      ]
+    }
+
+    {
+      "name":"TrackCredits",
+      "category": "Audio",
+      "requiredData":[
+        {"name": "trackId", "type": "id"},
+        {"name": "contributors",
+          "type":"map",
+          "map":{
+            "key":{
+              "type": "text"
+            },
+            "value":{
+              "relationshipType":"audioClip", // defaults to name
+              itemType: "Audio"
+            }
+          },
+        },
+        {"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
+        {"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
+        {"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
+        {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
+      ]
+    },
+
+    Recording{title, media, format}
+
+    VideoRecording{category:Audio, parent:"Recording", producer:(Person|Business), credits(RecordingCredits),
+      images[](Image), media, format}
+
+    AudioRecording{category:Audio, title, label(RecordLabel), execProducer(Person), credits(TrackCredits),
+      images[](Image), media, format}
+
+    {
+      "name":"AudioRecording",
+      "parent": "Audio",
+      "category": "Audio",
+      "requiredData":[
+        {"name": "title", "type": "text"},
+        {"name": "label", "relationshipType":"onLabel", itemType: ["RecordLabel"]},
+        {"name": "artist", "relationshipType":"performed", itemType: ["Person","Artist"]},
+        {"name": "executiveProducer", itemType: ["Person","Artist"]},
+        {"name": "credits", "relationshipType":"credits", itemType: ["TrackCredits"]},
+        {"name": images", "relationshipType":"performed", itemType: ["Person","Artist"]},
+        ],
+          "optionalData":[
+            {"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
+            {"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
+            {"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
+            {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
+          ]
+        },
+        VinylRecording{parent:Recording, media:Vinyl}
+        DigitalRecording{parent:Recording, media:digital }
+        CDRecording{parent:DigitalRecording, format:CD}
+        MP3Recording{parent:DigitalRecording, format:mp3}
+        WAVRecording{parent:DigitalRecording, format:wav}
+        MP4aRecording{parent:DigitalRecording, format:mp4a}
+        WMARecording{parent:DigitalRecording, format:wma}
+        MediaFile{mimeType, fileURL}
+        Audio{parent:MediaFile, mimeType:{mp3,wav,mp4a,wma}}
+        Image{parent:MediaFile, mimeType:{gif,jpg,png,bmp}}
+        RecordLabel{parent:Business,industry:Music }
+
+
+
+      ]
+}
+

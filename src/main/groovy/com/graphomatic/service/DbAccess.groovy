@@ -5,6 +5,8 @@ import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
+import com.graphomatic.typesystem.domain.Group
+import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.mongodb.gridfs.GridFSFile
@@ -272,4 +274,37 @@ class DbAccess {
         log.debug("DbAccess: item $graphItemId changed notes to [${notes} result: [${g.notes}]]")
         g
     }
+
+    Category getCategoryByName(String name) {
+        mongo.find(
+                new Query(Criteria.where(name).is("name")),Category
+        )
+    }
+
+    ItemType getItemTypeByName(String name) {
+        mongo.find(
+                new Query(Criteria.where(name).is("name")),ItemType
+        )
+    }
+
+    Relationship getRelationshipDefByName(String name) {
+        mongo.find(
+                new Query(Criteria.where(name).is("name")),Relationship
+        )
+    }
+
+    ItemType createItemType(ItemType itemType) {
+        mongo.insert(itemType)
+        itemType
+    }
+
+    Group createGroup(Group group) {
+        mongo.insert(group)
+        group
+    }
+
+    List<ItemType> getAllItemTypes() {
+        mongo.findAll(ItemType)
+    }
+
 }

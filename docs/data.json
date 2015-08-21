@@ -1,0 +1,300 @@
+{
+  "Categories": [
+    {
+      "name": "People",
+      "parent": "ALL",
+      "description": "People"
+    },
+    {
+      "name": "Audio",
+      "parent": "ALL",
+      "description": "all audio objects."
+    },
+    {
+      "name": "Women",
+      "parent": "People",
+      "description": "People",
+      "defaults":{
+
+      }
+    }
+  ],
+  "Relationships": [],
+  "ItemTypes": []
+}
+
+{
+  "Categories": [
+    {
+      "name": "People",
+      "children": {
+        "Family": {},
+        "Peers": {},
+        "Friends": {}
+      }
+    },
+    {
+      "name": "Music"
+    },
+    {
+      "name": "Location"
+    },
+    {
+      "name": "Business"
+    },
+    {
+      "name": "Software",
+      "children": {
+          "Software Design":{
+          },
+          "Software Deployment":{
+          },
+          "Software Application":{
+            "children": {
+                "Embedded App":{},
+                "Desktop App":{},
+                "Web App": {},
+                "Web Service": {},
+                "Phone/Tablet App":{}
+
+            }
+          }
+      }
+    }
+  ],
+  "Relationships": [
+    {
+      "Family": {
+        "type": "simple",
+        "categories": [],
+        "notes": ""
+      },
+      "Child": {
+        "type": "simple",
+        "reversedName": "Parent",
+        "categories": [
+          "Family"
+        ],
+        "parent": "Family",
+        "notes": ""
+      },
+      "Parent": {
+        "type": "simple",
+        "reversedName": "Child",
+        "categories": [
+          "Family"
+        ],
+        "parent": "Family",
+        "notes": ""
+      },
+      "Father": {
+        "type": "simple",
+        "reversedName": "Child",
+        "parent": "Parent",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+      "Mother": {
+        "type": "simple",
+        "reversedName": "Child",
+        "parent": "Parent",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+      "Sibling": {
+        "type": "simple",
+        "reversedName": "Sibling",
+        "parent": "Family",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+      "Brother": {
+        "type": "simple",
+        "reversedName": "Sibling",
+        "parent": "Sibling",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+      "Sister": {
+        "type": "simple",
+        "reversedName": "Sibling",
+        "parent": "Sibling",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+      "Aunt": {
+        "type": "simple",
+        "parent": "Family",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+      "Uncle": {
+        "type": "simple",
+        "parent": "Family",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+      "In Law": {
+        "type": "simple",
+        "parent": "Family",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+
+      "Brother In Law": {
+        "type": "simple",
+        "parent": "In Law",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+
+      "Sister In Law": {
+        "type": "simple",
+        "parent": "In Law",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+      "Mother In Law": {
+        "type": "simple",
+        "parent": "In Law",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+      "Father In Law": {
+        "type": "simple",
+        "parent": "In Law",
+        "categories": [
+          "Family"
+        ],
+        "notes": ""
+      },
+
+
+      "Composed Of": {
+        "type": "simple",
+        "reversedName": "Part Of",
+        "categories": [],
+        "notes": ""
+      },
+      "Part Of": {
+        "type": "simple",
+        "reversedName": "Composed Of",
+        "categories": [],
+        "parent": "Family",
+        "notes": ""
+      },
+      "Aggregates": {
+        "type": "simple",
+        "reversedName": "Child",
+        "parent": "Uses",
+        "notes": ""
+      },
+      "Uses": {
+        "type": "simple",
+        "categories": [],
+        "notes": ""
+      },
+      "Resides At": {
+        "type": "simple",
+        "categories": [
+          "Location"
+        ],
+        "parent": "Family",
+        "notes": ""
+      },
+      "Located At": {
+        "type": "simple",
+        "categories": [
+          "Location"
+        ],
+        "notes": ""
+      },
+      "Calls": {
+        "type": "simple",
+        "categories": [
+          "Software Design"
+        ],
+        "parent": "Uses",
+        "notes": ""
+      },
+      "Called by": {
+        "type": "simple",
+        "categories": [
+          "Software"
+        ],
+        "parent": "Uses",
+        "notes": ""
+      }
+    }
+  ],
+
+"Builtin Types" : {
+  "String" :{},
+  "Text" :{ "note":"??same as String ??" },
+  "Number" :{},
+  "EmailAddress" :{},
+  "Url" :{},
+  "DateTime" :{},
+  "Currency" :{},
+  "GeoLocation" :{},
+},
+
+  "Types": {
+    "Person": {
+      "firstName" : {
+        "types" : ["Text"]
+      },
+      "lastName" : {},
+      "email" : {},
+      "state": {
+        "types": ["text"],
+        "oneOf": ["IL","TX","OH","IN","MI","NV","NY","CA"]
+      },
+      "city": {},
+      "friends": {
+        "types" : ["Person"]
+      },
+      "constraints": {
+        "firstName" : "not null",
+        "Person": [
+          "firstName neq lastName",
+          "birthDate lt $now",
+          "age lt parent.age"
+        ]
+      }
+    },
+    "Vinyl Record" : {},
+    "Artist" : {}
+  }
+}
+
+

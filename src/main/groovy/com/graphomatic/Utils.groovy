@@ -1,5 +1,4 @@
 package com.graphomatic
-
 /**
  * Created by lcollins on 6/28/2015.
  */
@@ -18,4 +17,5 @@ class Utils {
         m.findAll { !['class', 'metaClass'].contains(it.key) }
 
     }
+
 }
