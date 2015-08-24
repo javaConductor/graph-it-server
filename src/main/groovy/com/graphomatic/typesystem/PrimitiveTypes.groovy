@@ -1,5 +1,6 @@
 package com.graphomatic.typesystem
 
+import com.graphomatic.typesystem.validation.ValidationException
 import org.codehaus.groovy.util.StringUtil
 import org.springframework.util.StringUtils
 
@@ -26,11 +27,9 @@ class PrimitiveTypes {
         All.contains(typeName)
     }
 
-    static boolean validate(List<String> types, String  value) {
+    static boolean validate(String type, String  value) {
 
-        types.any {t ->
-
-            switch (t){
+            switch (type){
                 case Number :
                     return value.isNumber()
                     break
@@ -67,14 +66,44 @@ class PrimitiveTypes {
                         isEmail(value)
                     break
             }
-
-        }
-
     }
-    boolean isEmail(String text){
-        private static final String EMAIL_PATTERN = "[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})"
-        Pattern pattern = Pattern.compile(EMAIL_PATTERN)
-        Matcher m = pattern.matcher(text)
+
+    private static final String EMAIL_PATTERN = "[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})"
+    static Pattern emailPattern = Pattern.compile(EMAIL_PATTERN)
+    static boolean isEmail(String text){
+        Matcher m = emailPattern.matcher(text)
         m.matches()
+    }
+
+    static Object fromString(String typeName, String value) {
+        switch (typeName){
+            case Number :
+                return value.toDouble()//.isNumber()
+            case Text :
+                return value
+            case Boolean :
+                    return java.lang.Boolean.parseBoolean(value)
+            case Link :
+                try {
+                    new java.net.URL(value)
+                }catch(Exception e){
+                    throw new ValidationException("Value: $value not a valid URL")
+                }
+                break
+            case DateTime :
+                SimpleDateFormat sdf = new SimpleDateFormat("YYYYmmDDHHMMSS")
+                try {
+                    sdf.parse(value)
+                }
+                catch(Exception e){
+                    throw new ValidationException("Value: $value not a valid URL")
+                }
+                return value
+            case EmailAddress :
+                isEmail(value)
+                break
+            default:
+                throw new ValidationException("Type: $typeName not a valid primitive type.")
+        }
     }
 }

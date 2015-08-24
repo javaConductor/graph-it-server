@@ -51,6 +51,7 @@ class ItemType {
     String name
     List<Category> categories
     List<PropertyDef> propertyDefs
+    transient Set<String> hierarchy
     List<Map> defaults
     String parentName
 }

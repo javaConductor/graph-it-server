@@ -18,10 +18,9 @@ class PropertyDef {
      * referenced my this dataElement.
      * If not defined, there are constraints on relationship
      */
-    String containerType // "list" | "map" | null - should be null for single value
-    List<Relationship> validRelationships
-    List<String> validDataTypes
-    List<ItemType> validItemTypes
+    Relationship relationship
+    String collectionType // "list" | "map" | null - should be null for single value
+    String typeName
     //TODO MapInfo mapInfo // used when dataType is 'map'
     Object defaultValue // can be null
 }

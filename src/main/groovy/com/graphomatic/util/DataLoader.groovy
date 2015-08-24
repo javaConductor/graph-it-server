@@ -2,6 +2,7 @@ package com.graphomatic.util
 
 import com.graphomatic.domain.Category
 import com.graphomatic.typesystem.MapInfo
+import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.domain.Relationship
 import com.graphomatic.typesystem.validation.DataElementDefValidator
@@ -106,11 +107,13 @@ types: [{
 
 class DataLoader {
     GraphItService graphItService
+    TypeSystem typeSystem
     ItemTypeValidator itemTypeValidator = new ItemTypeValidator()
     DataElementDefValidator dataElementDefValidator = new DataElementDefValidator()
 
-    DataLoader(GraphItService graphItService) {
+    DataLoader(GraphItService graphItService, TypeSystem typeSystem) {
         this.graphItService = graphItService
+        this.typeSystem = typeSystem
     }
 
     def loadData(InputStream is) {
@@ -222,67 +225,44 @@ class DataLoader {
 		{"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
 	]*/
 
-    private PropertyDef dataElementDefFromJson(jsonDataElementDef) {
-        List<String> validDataTypes = []
-        List<ItemType> validItemTypes = []
-        List<Relationship> validRelationships = []
-        String dataElementName
+    private PropertyDef dataElementDefFromJson(jsonPropertyDef) {
+        String typeName
+        Relationship relationship
+        String propertyName
         String defaultValue
 
-        dataElementName = jsonDataElementDef.name
-        if (!dataElementName)
-            throw new IllegalArgumentException('date type: "map" is not yet supported')
+        propertyName = jsonPropertyDef.name
+        if (!propertyName)
+            throw new IllegalArgumentException('Name is empty or missing.')
 
-        defaultValue = jsonDataElementDef.defaultValue
+        defaultValue = jsonPropertyDef.defaultValue
+        typeName = jsonPropertyDef.typeName
+        if (!typeSystem.isKnownType(typeName)) {
+            throw new ValidationException("No such type: $typeName for data element: $propertyName")
 
-        if (jsonDataElementDef.type) {// type has primitive data type
-            validDataTypes = ((jsonDataElementDef.type instanceof List)
-                    ? jsonDataElementDef.type
-                    : [jsonDataElementDef.type]).collect { jsonTypeName ->
-                if (!PrimitiveTypes.isPrimitiveType(jsonTypeName)) {
-                    throw new ValidationException("No such type: $jsonTypeName for data element: $dataElementName")
-
-                }
+            if(PrimitiveTypes.isPrimitiveType(typeName)){
+                typeSystem.fixType(typeName, defaultValue)
             }
-        }
 
-        if (jsonDataElementDef.itemType) {// type has item type
-            validItemTypes = ((jsonDataElementDef.itemType instanceof List)
-                    ? jsonDataElementDef.itemType
-                    : [jsonDataElementDef.itemType]).collect { jsonItemTypeName ->
-                def nutype = graphItService.getItemTypeByName(jsonItemTypeName)
-                if (!nutype)
-                    throw new ValidationException("No such type: $jsonItemTypeName for data element: $dataElementName")
+            if (jsonPropertyDef.relationship) {// element relationship constraint
+                relationship  = graphItService.getRelationshipDefByName(jsonPropertyDef.relationship)
             }
-        }
 
-        if (jsonDataElementDef.relationship) {// element relationship constraint
-            validRelationships = ((jsonDataElementDef.relationship instanceof List)
-                    ? jsonDataElementDef.relationship
-                    : [jsonDataElementDef.relationship]).collect { rel ->
-                def nurel = graphItService.getRelationshipDefByName(rel)
-                if (!nurel)
-                    throw new ValidationException("No such relationship: $rel for data element: $dataElementName")
+            if (typeName == (PrimitiveTypes.Map)) {
+                throw new IllegalArgumentException('data type: "map" is not yet supported')
             }
-        }
 
-        if (validDataTypes.contains(PrimitiveTypes.Map)) {
-            MapInfo minfo = new MapInfo()
-            throw new IllegalArgumentException('date type: "map" is not yet supported')
-        }
-
-        /// throw exception if not valid
-        dataElementDefValidator.validate(
-            new PropertyDef(
-                    name: dataElementName,
-                    validItemTypes: validItemTypes,
-                    validRelationships: validRelationships,
-                    validDataTypes: validDataTypes,
-                    defaultValue: defaultValue
+            /// throw exception if not valid
+            dataElementDefValidator.validate(
+                    new PropertyDef(
+                            name: propertyName,
+                            typeName: typeName,
+                            relationship: relationship,
+                            defaultValue: defaultValue
+                    )
             )
-        )
+        }
     }
-
     /**
      *
      * @param jsonItemType

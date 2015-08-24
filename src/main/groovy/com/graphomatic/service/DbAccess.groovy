@@ -307,4 +307,8 @@ class DbAccess {
         mongo.findAll(ItemType)
     }
 
+    String getTypeOfItem(String s) {
+        def item = getGraphItem(s)
+        item?.typeName
+    }
 }

@@ -4,6 +4,7 @@ import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemRelationship
+import com.graphomatic.domain.Property
 import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.Group
 import com.graphomatic.typesystem.domain.ItemType
@@ -105,14 +106,16 @@ class GraphItService {
         return dbAccess.update(graphItem);
     }
 
-//    GraphItem createGraphItem(String title, Position position) {
-//        return dbAccess.createGraphItem(title,
-//                position.x,
-//                position.y);
-//    }
-
     GraphItem createGraphItem(GraphItem graphItem) {
         return dbAccess.createGraphItem(writeTransform(graphItem ));
+    }
+
+    boolean createTypedItem(ItemType itemType, Map initProperties){
+        List<Property> data = typeSystem.createDefaultInitData(itemType, initProperties)
+
+        new GraphItem(categories: itemType.categories,
+                typeName: itemType.name,
+                data: data)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,10 +124,10 @@ class GraphItService {
     Group createGroup( Group group){
         dbAccess.createGroup( group )
     }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // TestData
     //////////////////////////////////////////////////////////////////////////////////////////////////
-
     List testDataFiles = [
             "sword.data.json"
     ]
@@ -278,10 +281,9 @@ class GraphItService {
 
    ItemType postProcess(ItemType itemType){
        if(itemType){
-           def inherited
-           inherited = getTypePropertiesAndDefaults( itemType )
+           def inherited = typeSystem.getTypePropertiesAndDefaults( itemType.name )
            itemType.defaults = inherited.defaults
-           itemType.dataDefs = inherited.dataDefs
+           itemType.propertyDefs = inherited.propertyDefs
        }
        itemType
    }
