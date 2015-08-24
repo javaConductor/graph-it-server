@@ -30,6 +30,14 @@ class PrimitiveTypeSpec extends  Specification {
         number == 1.5
     }
 
+ def "should parse bad double as null"(){
+        when:
+        def number = PrimitiveTypes.fromString("number", "1.5.0")
+
+        then:
+        number == null
+    }
+
  def "should parse 'true'  as true"(){
         when:
         def b = PrimitiveTypes.fromString("boolean", "true")
@@ -68,6 +76,22 @@ class PrimitiveTypeSpec extends  Specification {
 
         then:
         number == null
+    }
+
+    def "should parse url"(){
+        when:
+        def value = PrimitiveTypes.fromString(PrimitiveTypes.Link, "http://lee.com")
+
+        then:
+        value instanceof  URL
+    }
+
+    def "should parse bad url to null"(){
+        when:
+        def value = PrimitiveTypes.fromString(PrimitiveTypes.Link, "http@lee.com")
+
+        then:
+        value == null
     }
 
 }

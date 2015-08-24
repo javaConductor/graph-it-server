@@ -1,9 +1,6 @@
 package com.graphomatic.typesystem
 
 import com.graphomatic.typesystem.validation.ValidationException
-import org.codehaus.groovy.util.StringUtil
-import org.springframework.util.StringUtils
-
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -78,7 +75,11 @@ class PrimitiveTypes {
     static Object fromString(String typeName, String value) {
         switch (typeName){
             case Number :
-                return value.toDouble()//.isNumber()
+                try {
+                    return value.toDouble()
+                } catch (NumberFormatException e) {
+                    return null
+                }
             case Text :
                 return value
             case Boolean :
@@ -87,7 +88,7 @@ class PrimitiveTypes {
                 try {
                     new java.net.URL(value)
                 }catch(Exception e){
-                    throw new ValidationException("Value: $value not a valid URL")
+                    return null
                 }
                 break
             case DateTime :
@@ -96,14 +97,14 @@ class PrimitiveTypes {
                     sdf.parse(value)
                 }
                 catch(Exception e){
-                    throw new ValidationException("Value: $value not a valid URL")
+                    return null
                 }
                 return value
             case EmailAddress :
                 isEmail(value) ? value : null
                 break
             default:
-                throw new ValidationException("Type: $typeName not a valid primitive type.")
+                throw new ValidationException("Type: [$typeName] not a valid primitive type.")
         }
     }
 }
