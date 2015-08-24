@@ -100,7 +100,7 @@ class PrimitiveTypes {
                 }
                 return value
             case EmailAddress :
-                isEmail(value)
+                isEmail(value) ? value : null
                 break
             default:
                 throw new ValidationException("Type: $typeName not a valid primitive type.")
