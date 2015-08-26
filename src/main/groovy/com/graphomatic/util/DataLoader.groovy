@@ -240,10 +240,13 @@ class DataLoader {
         if (!typeSystem.isKnownType(typeName)) {
             throw new ValidationException("No such type: $typeName for data element: $propertyName")
 
-            if(PrimitiveTypes.isPrimitiveType(typeName)){
-                typeSystem.fixType(typeName, defaultValue)
+            // convert string to proper data type
+            if( PrimitiveTypes.isPrimitiveType(typeName) ){
+                typeSystem.fixType( typeName, defaultValue )
             }
 
+            // when an item property refers to another item then
+            // the relationship between those items will be 'jsonPropertyDef.relationship'
             if (jsonPropertyDef.relationship) {// element relationship constraint
                 relationship  = graphItService.getRelationshipDefByName(jsonPropertyDef.relationship)
             }
@@ -287,8 +290,8 @@ class DataLoader {
         }
 
         /// DATA
-        List dataDefs = jsonItemType.properties.collect { jsonDataElementDef ->
-            dataElementDefFromJson(jsonDataElementDef)
+        Map<String, PropertyDef> dataDefs = jsonItemType.properties.collectEntries {String propertyName, jsonDataElementDef ->
+            [ (propertyName) : dataElementDefFromJson(jsonDataElementDef)]
         }
         /// throw exception if not valid
         itemTypeValidator.validate(new ItemType(categories: categories,

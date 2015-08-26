@@ -12,30 +12,22 @@ import org.springframework.data.mongodb.core.mapping.Document
 {
 	"name" : "GroupMember" ,
 	"parent":"Person",
-	"requiredData":[
-	],
-	"optionalData":[
+	"properties":[
 		{"name": "contribution", "type": "text"}
 	]
 },{
 	"name":"TrackCredits",
 	"category": "Audio",
-	"requiredData":[
+	"properties":[
 		{"name": "trackId", "type": "id"},
-		{"name": "contributors",
-			"type":"map",
-			"map":{
-				"key":{
-					"type": "text"
-				},
-				"value":{
-					"relationshipType":"audioClip", // defaults to name
-					itemType: "Audio"
-				}
+		{"name": "contributors", "typeName":"Audio",
+			"relationshipType":"audioClipOf", // defaults to name
+			"collectionType":"list",
+			"list":{
+				"memberConstraint" : {
+					itemType: ["Audio"]
 			},
 		},
-	],
-	"optionalData":[
 		{"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
 		{"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
 		{"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
@@ -50,7 +42,7 @@ class ItemType {
 	String id
     String name
     List<Category> categories
-    List<PropertyDef> propertyDefs
+    Map<String,PropertyDef> propertyDefs
     transient Set<String> hierarchy
     List<Map> defaults
     String parentName

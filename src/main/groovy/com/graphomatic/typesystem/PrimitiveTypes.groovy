@@ -62,6 +62,8 @@ class PrimitiveTypes {
                 case EmailAddress :
                         isEmail(value)
                     break
+                case null:
+                    return  false
             }
     }
 

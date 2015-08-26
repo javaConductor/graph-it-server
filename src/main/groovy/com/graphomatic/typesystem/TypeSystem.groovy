@@ -10,6 +10,15 @@ import com.graphomatic.typesystem.validation.ValidationException
  * Created by lcollins on 8/20/2015.
  */
 class TypeSystem {
+    static final String BASE_TYPE_NAME='$thing'
+    def baseItemType = new ItemType(
+            name: BASE_TYPE_NAME,
+            propertyDefs: [
+                createDateTime:[name : "createDateTime", collectionType: '', typeName: 'dateTime', required: true]
+                ],
+            hierarchy: [],
+            categories: ["ALL"]
+            )
 
     DbAccess dbAccess
     LRUTypeCache cache
@@ -17,11 +26,13 @@ class TypeSystem {
     def TypeSystem(DbAccess dbAccess) {
         this.dbAccess = dbAccess
         cache = new LRUTypeCache()
+        cache[baseItemType.name]=baseItemType
     }
 
     ItemType resolveType(String typeName) {
         if (!typeName)
             return null;
+
         if (cache[typeName]) {
             return cache[typeName]
         }
@@ -39,59 +50,29 @@ class TypeSystem {
         itemType
     }
 
-    /**
-     *  Add dataDefs from newDataDefs to origDataDefs also replace
-     *  Maybe this is tooo simple
-     *
-     * @param propertiesAndDefaults
-     * @param newDataDefs
-     * @param newDefaults
-     * @return map{ defaults, propertyDefs}
-     */
-    Map applyPropertiesAndDefaults(Map propertiesAndDefaults, List newDataDefs, Map newDefaults) {
-        /// first update the existing propertyDefs in the map
-        List appliedDatadefs = propertiesAndDefaults.propertyDefs.collect { PropertyDef origDataDef ->
-
-            def replacement = newDataDefs.find { PropertyDef nuDataDef ->
-                nuDataDef.name == origDataDef.name
-            }
-            return (replacement) ?: origDataDef
-        }
-
-        //// now we have replaced the ones from original - let's get the new ones from newDataDefs
-        List newDefs = newDataDefs.split { PropertyDef nuDataDef ->
-            return appliedDatadefs.find { PropertyDef origDataDef ->
-                nuDataDef.name == origDataDef.name
-            }
-        }[1]
-
-        /// now we have both lists so concat
-        [dataDefs: appliedDatadefs + newDefs,
-         defaults: propertiesAndDefaults.defaults << newDefaults]
-    }
 
     Map getTypePropertiesAndDefaults(String typeName) {
-        def ret = [defaults: [], propertyDefs: [:]]
-        if (!typeName)
-            return ret
+        boolean foundInCache;
 
-        ItemType itemType = cache[typeName]
-        //if its in the cache that's all we need
-        if (itemType) {
-            return [defaults: itemType.defaults, propertyDefs: itemType.propertyDefs]
-        } else {// not in the cache so get it fron db
-            itemType = dbAccess.getItemTypeByName(typeName)
-            if (!itemType) {// not in db so return empty map
-                return ret
-            }
-        }
-        // now we have an ItemType so lets use it
-        if (itemType.parentName) {// preload list with parent stuff
-            ret = getTypePropertiesAndDefaults(itemType.parentName)
+        String t = typeName
+        List<ItemType> itemTypeList = []
+
+        while( t && !foundInCache ) {
+            ItemType itemType = cache[typeName]
+
+            if(!itemType)
+                itemType = dbAccess.getItemTypeByName(typeName)
+            else
+                foundInCache = true;
+
+            itemTypeList.add itemType
+            t = itemType.parentName
         }
 
-        ret = applyPropertiesAndDefaults(ret, itemType.propertyDefs, itemType.defaults)
-        ret
+        itemTypeList.reverse().inject( [ propertyDefs: [:], defaults:[:] ] ){Map accum, ItemType  type ->
+            [propertyDefs : (accum.propertyDefs << type.propertyDefs),
+            defaults : (accum.defaults  <<  type.defaults)]
+        }
     }
 
     List getTypeHierarchy(ItemType itemType) {
@@ -100,41 +81,13 @@ class TypeSystem {
                 : [])
     }
 
-
-    List<Property> createDefaultInitData(ItemType itemType, Map initProperties) {
-        // get the required properties
-        List requiredAndOptional = itemType.propertyDefs.split { PropertyDef propertyDef ->
-            propertyDef.required
-        }
-
-        List propNames = itemType.propertyDefs.collect {pdef ->
-            pdef.name
-        }
-
-        List req = requiredAndOptional[0]
-        List optional = requiredAndOptional[1]
-        List reqProps = req.collect { PropertyDef propertyDef ->
-            def instanceValue = initProperties[propertyDef.name]
-            if (!instanceValue && !itemType?.defaults[propertyDef.name]) {
-                throw new ValidationException("Could not create item of type ${itemType.name}: No value for required property: ${propertyDef.name}")
+    Map<String, Property> createDefaultInitData(ItemType itemType, Map initProperties) {
+        itemType.propertyDefs.collectEntries {String propertyName, PropertyDef propertyDef ->
+            if (propertyDef.required &&  !initProperties[propertyName] && !itemType?.defaults[propertyName]) {
+                throw new ValidationException("Could not create item of type ${itemType.name}: No value for required property: ${propertyName}")
             }
-            createProperty(propertyDef, instanceValue ?: itemType.defaults[propertyDef.name])
+            [(propertyName) : createProperty(propertyDef, initProperties[propertyName] ?: itemType.defaults[propertyName])]
         }
-
-        List optionalProps = optional.collect { PropertyDef propertyDef ->
-            def instanceValue = initProperties[propertyDef.name]
-            // defaultValue can be either: value or item reference
-            if (instanceValue || itemType?.defaults[propertyDef.name]) {
-                createProperty(propertyDef, instanceValue ?: itemType.defaults[propertyDef.name])
-            }
-        }
-
-        List extraInitProps = initProperties.keySet().collect { String name ->
-            Object value = initProperties[name]
-            return (propNames.contains(name)) ? [] : [synthesizeProperty(name, value)]
-        }.flatten()
-
-        reqProps << (optionalProps <<  extraInitProps)
     }
 
     Property createProperty(PropertyDef propertyDef, Object value, boolean validate = false) {
@@ -150,6 +103,7 @@ class TypeSystem {
                 new Property(name: propertyDef.name, value: values, collectionType: "list")
                 break;
 
+            case "":
             case null:
                 if (validate) {
                     validateValues(propertyDef.typeName, [value])
@@ -172,29 +126,9 @@ class TypeSystem {
         PrimitiveTypes.fromString(typeName, value)
     }
 
-    Property synthesizeProperty(String propertyName, Object value) {
-        // value may be a list or single value
-        // if its a list it can have a reference in the list
-        // if its s single value it may be a reference
-
-        if (value instanceof  List)
-            synthesizeListProperty(propertyName, value as List)
-        else {
-            if(isReference(value)){
-                new Property(  name: propertyName, value: value, collectionType: "")
-            }else{
-                new Property(  name: propertyName, value: value, collectionType: "")
-            }
-        }
-    }
-
     boolean isReference( Object o){
         String s = o?.toString()?.trim()
         (s.startsWith('$ref:[') && s.endsWith(']') )
-    }
-
-    Property synthesizeListProperty(String propertyName, List list) {
-            new Property(  name: propertyName, value: list, collectionType: "list")
     }
 
     boolean validateValues(String typeName, List values) {
@@ -214,7 +148,7 @@ class TypeSystem {
         ItemType valueItemType = getReferenceType(value)
         // is the type of the valueItem compatible
         // with any of the valid types
-       canAssign( valueItemType.name, typeName )
+       canAssign( valueItemType?.name, typeName )
     }
 
     boolean dataValidForPrimitiveTypes(String typeName, Object value) {
@@ -231,10 +165,23 @@ class TypeSystem {
     boolean canAssign(String sourceTypeName, String targetTypeName) {
         ItemType sourceType = resolveType(sourceTypeName)
         // search for  target type up the hierarchy of source type
-        sourceType.hierarchy.contains(targetTypeName)
+        sourceType?.hierarchy?.contains(targetTypeName)
     }
 
     boolean isKnownType(String typeName) {
         PrimitiveTypes.isPrimitiveType(typeName) || resolveType(typeName)
+    }
+
+    boolean validateProperties(ItemType itemType, Map<String, Property> dataList) {
+        // make sure the primitive types are ok and the others are references
+        dataList.keySet().every { String name ->
+            PropertyDef pdef = itemType.propertyDefs[name]
+            PrimitiveTypes.isPrimitiveType ( pdef?.typeName ) ? (
+                PrimitiveTypes.validate(pdef?.typeName,  dataList[name]?.value )
+            ) : (
+                isReference(dataList[ name ].value ) &&
+                        canAssign(pdef.name, getReferenceType(dataList[ name ]?.value)?.name)
+            )
+        }
     }
 }

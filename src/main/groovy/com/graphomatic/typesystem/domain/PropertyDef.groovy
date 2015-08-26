@@ -21,6 +21,4 @@ class PropertyDef {
     Relationship relationship
     String collectionType // "list" | "map" | null - should be null for single value
     String typeName
-    //TODO MapInfo mapInfo // used when dataType is 'map'
-    Object defaultValue // can be null
 }

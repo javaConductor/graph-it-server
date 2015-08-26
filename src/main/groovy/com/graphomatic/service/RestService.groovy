@@ -169,7 +169,7 @@ class RestService {
 
         /// remove a graphitem
         delete(':id') { id ->
-            writeJson { ok : graphItService.removeGraphItem(id) }
+            writeJson ([ ok : graphItService.removeGraphItem( id ) ])
         }
 
         /// Update
@@ -197,6 +197,7 @@ class RestService {
         post('/form') { FormData formData ->
             String title = formData.getValue("title")
             String cat = formData.getValue("category")
+            String typeName = formData.getValue("typeName") ?: ""
             Position pos =  (
                         formData.getValue("position.x") && formData.getValue("position.y")
                         ) ?  new Position(
@@ -206,6 +207,7 @@ class RestService {
 
             Category category = graphItService.getCategory(cat)
             GraphItem g = graphItService.createGraphItem( new GraphItem(title: title,
+                    typeName: typeName,
                     images: [],
                     position : pos,
                     categories: category ? [category] : []))
@@ -216,6 +218,7 @@ class RestService {
             }
             writeJson prepareGraphItem(g) + [_links: links(g)]
         }
+
         /// Create
         post('') { GraphItem graphItem ->
             GraphItem g = graphItService.createGraphItem(graphItem)

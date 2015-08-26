@@ -13,5 +13,5 @@ class Group {
     String id
     String name
     GroupDef groupDef
-    List<Property> groupProperties
+    Map<String, Property> groupProperties
 }

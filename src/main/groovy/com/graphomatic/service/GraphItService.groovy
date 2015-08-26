@@ -63,12 +63,14 @@ class GraphItService {
     }
 
     boolean removeGraphItem(String id) {
+        //TODO only mark it as deleted
         return dbAccess.removeGraphItem(id);
     }
 
     List<GraphItem> getAllGraphItems() {
         return dbAccess.getAllGraphItems().collect( this.&readTransform)
     }
+
     GraphItem setAsMainImage(String graphItemId, String imageId) {
         GraphItem graphItem = dbAccess.getGraphItem(graphItemId)
         if (! graphItemId)
@@ -107,15 +109,11 @@ class GraphItService {
     }
 
     GraphItem createGraphItem(GraphItem graphItem) {
+        // before we write it, lets check it
+        if(graphItem.data){
+            typeSystem.validateProperties(  graphItem.type ?:  typeSystem.resolveType(  graphItem.typeName ), graphItem.data )
+        }
         return dbAccess.createGraphItem(writeTransform(graphItem ));
-    }
-
-    boolean createTypedItem(ItemType itemType, Map initProperties){
-        List<Property> data = typeSystem.createDefaultInitData(itemType, initProperties)
-
-        new GraphItem(categories: itemType.categories,
-                typeName: itemType.name,
-                data: data)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,63 +142,6 @@ class GraphItService {
         testDataFiles.each { fname ->
             loader.loadData   new FileInputStream( new File("../$fname") )
         }
-
-    }
-    def createTestDataOLD() {
-
-        //todo FIX THIS   -- Family->parent == People
-        def categories = [
-                new Category(name: "People",parent: null),
-                new Category(name: "Family",parent: null),
-                new Category(name: "Music",parent: null)
-        ];
-
-        List<Category> nuCategories = createCategories(categories);
-
-        def testData = [
-                new GraphItem(title: "Lee Collins",
-                        position: new Position(x: 100L, y:100L),
-                        data: [],
-                        categories: [nuCategories[0]],
-                        images: [] ),
-                new GraphItem(title: "David Collins",
-                        position: new Position(x: 200L, y:100L),
-                        data: [],
-                        categories: [nuCategories[0]],
-                        images: [] )
-        ]
-
-        def nuItems = testData.collect { gitem ->
-            createGraphItem(gitem)
-        }
-
-        String folder="C:/Users/lcollins/git/graph-it/"
-        createItemImage(nuItems[0].id,
-                new FileInputStream(
-                        new File(folder,
-                                '/images/manAndWomanBlackLight.jpg')
-                ), "image/jpeg"
-        )
-
-        createItemImage(nuItems[1].id,
-                new FileInputStream(
-                        new File(folder,
-                                '/images/metal textures 1920x1200 wallpaper_wallpaperswa.com_73.jpg')
-                ), "image/jpeg"
-        )
-
-
-        /// create Relationship
-        def nuRels = [
-         new Relationship(name: "Child", type: "simple", categories: [nuCategories[1]]),
-         new Relationship(name: "Parent", type: "simple", categories: [nuCategories[1]]),
-        ]
-
-        nuRels.each { r ->
-            createRelationship(r);
-        }
-
-        dbAccess.createItemRelationship(nuItems[0].id,nuItems[1].id,nuRels[0])
 
     }
 
@@ -276,19 +217,23 @@ class GraphItService {
     }
 
     ItemType getAllItemTypes() {
-        dbAccess.getAllItemTypes().collect( postProcess)
+        dbAccess.getAllItemTypes().collect(postProcess)
     }
-
-   ItemType postProcess(ItemType itemType){
-       if(itemType){
-           def inherited = typeSystem.getTypePropertiesAndDefaults( itemType.name )
-           itemType.defaults = inherited.defaults
-           itemType.propertyDefs = inherited.propertyDefs
-       }
-       itemType
-   }
 
     ItemType createItemType(ItemType itemType) {
         postProcess(dbAccess.createItemType(itemType))
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Common
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    ItemType postProcess( ItemType itemType ){
+        if(itemType){
+            def inherited = typeSystem.getTypePropertiesAndDefaults( itemType.name )
+            itemType.defaults = inherited.defaults
+            itemType.propertyDefs = inherited.propertyDefs
+        }
+        itemType
+    }
+
 }

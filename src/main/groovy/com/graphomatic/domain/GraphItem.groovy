@@ -17,7 +17,7 @@ class GraphItem {
 
     List<Category> categories;
     String notes
-    List<Property> data;
+    Map<String, Property> data;
     String typeName
     transient ItemType type
 }
