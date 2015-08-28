@@ -11,6 +11,7 @@ import com.graphomatic.typesystem.validation.ValidationException
 import com.graphomatic.service.GraphItService
 import com.graphomatic.typesystem.PrimitiveTypes
 import com.graphomatic.typesystem.domain.PropertyDef
+import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 
 /**
@@ -121,14 +122,15 @@ class DataLoader {
         def data = new JsonSlurper().parse(is)
         List<Category> categories
         List<Relationship> relationshipDefs
-        List<ItemType> types
+        Map<String, ItemType> types
 
-        if(data.Categories)
+        if (data.Categories)
             categories = loadCategories(data.Categories);
-        if(data.Relationships)
+        if (data.Relationships)
             relationshipDefs = loadRelationships(data.Relationships)
-        if(data.Types)
+        if (data.Types)
             types = loadItemTypes(data.Types)
+        println( new JsonBuilder(types).toPrettyString() )
     }
 
 /*
@@ -225,30 +227,26 @@ class DataLoader {
 		{"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
 	]*/
 
-    private PropertyDef dataElementDefFromJson(jsonPropertyDef) {
+    private PropertyDef dataElementDefFromJson(propertyName, jsonPropertyDef) {
         String typeName
         Relationship relationship
-        String propertyName
-        String defaultValue
 
-        propertyName = jsonPropertyDef.name
         if (!propertyName)
             throw new IllegalArgumentException('Name is empty or missing.')
 
-        defaultValue = jsonPropertyDef.defaultValue
-        typeName = jsonPropertyDef.typeName
+        typeName = jsonPropertyDef.type
         if (!typeSystem.isKnownType(typeName)) {
             throw new ValidationException("No such type: $typeName for data element: $propertyName")
-
+        }
             // convert string to proper data type
-            if( PrimitiveTypes.isPrimitiveType(typeName) ){
-                typeSystem.fixType( typeName, defaultValue )
-            }
+//            if (PrimitiveTypes.isPrimitiveType(typeName)) {
+//                typeSystem.fixType(typeName, defaultValue)
+//            }
 
             // when an item property refers to another item then
             // the relationship between those items will be 'jsonPropertyDef.relationship'
             if (jsonPropertyDef.relationship) {// element relationship constraint
-                relationship  = graphItService.getRelationshipDefByName(jsonPropertyDef.relationship)
+                relationship = graphItService.getRelationshipDefByName(jsonPropertyDef.relationship)
             }
 
             if (typeName == (PrimitiveTypes.Map)) {
@@ -261,19 +259,19 @@ class DataLoader {
                             name: propertyName,
                             typeName: typeName,
                             relationship: relationship,
-                            defaultValue: defaultValue
+                            required: jsonPropertyDef.required
                     )
             )
         }
-    }
+
     /**
      *
      * @param jsonItemType
      * @return
      */
-    private ItemType itemTypeFromJson(jsonItemType) {
+    private ItemType itemTypeFromJson(typeName, jsonItemType) {
 
-        if (!jsonItemType.name)
+        if (!typeName)
             throw new IllegalArgumentException("Types must have names.")
 
         /// PARENT
@@ -290,21 +288,31 @@ class DataLoader {
         }
 
         /// DATA
-        Map<String, PropertyDef> dataDefs = jsonItemType.properties.collectEntries {String propertyName, jsonDataElementDef ->
-            [ (propertyName) : dataElementDefFromJson(jsonDataElementDef)]
+        Map<String, PropertyDef> dataDefs =
+                jsonItemType.properties.collectEntries { String propertyName, jsonDataElementDef ->
+            [(propertyName): dataElementDefFromJson(propertyName, jsonDataElementDef)]
         }
         /// throw exception if not valid
-        itemTypeValidator.validate(new ItemType(categories: categories,
-                propertyDefs: dataDefs,
-                parent: parentType,
-                name: jsonItemType.name
-        ))
+        itemTypeValidator.validate(
+                new ItemType(
+                        categories: categories,
+                        propertyDefs: dataDefs,
+                        parentName: parentType,
+                        name: typeName
+                )
+        )
     }
 
-    ItemType loadItemTypes(jsonItemTypes) {
-        jsonItemTypes.collect { it ->
-            def newtype = itemTypeFromJson(it)
-            graphItService.createItemType(newtype)
+    Map<String,ItemType> loadItemTypes(Map jsonItemTypes) {
+        println "loadItemTypes: "+new JsonBuilder(jsonItemTypes).toPrettyString()
+
+        jsonItemTypes.collectEntries { typeName, jsonItem ->
+            println "loading Type $typeName"
+            def newtype = itemTypeFromJson(typeName, jsonItem)
+            println "Before "+new JsonBuilder(newtype).toPrettyString()
+            newtype = graphItService.createItemType( newtype )
+            println "After "+new JsonBuilder(newtype).toPrettyString()
+            [ (typeName) : ( newtype ) ]
         }
     }
 }

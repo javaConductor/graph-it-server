@@ -14,9 +14,8 @@ class PropertyDef {
     String name
     boolean required
     /**
-     * If defined, these are the only relationships that can be
-     * referenced my this dataElement.
-     * If not defined, there are constraints on relationship
+     *  if this property refers to an item then assigning this property implies
+     *  this relationship between 'this'  item and the reference
      */
     Relationship relationship
     String collectionType // "list" | "map" | null - should be null for single value

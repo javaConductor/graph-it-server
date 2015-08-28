@@ -14,7 +14,7 @@ class TypeSystem {
     def baseItemType = new ItemType(
             name: BASE_TYPE_NAME,
             propertyDefs: [
-                createDateTime:[name : "createDateTime", collectionType: '', typeName: 'dateTime', required: true]
+                createDateTime: [name : "createDateTime", collectionType: '', typeName: 'dateTime', required: true] as PropertyDef
                 ],
             hierarchy: [],
             categories: ["ALL"]
@@ -50,7 +50,6 @@ class TypeSystem {
         itemType
     }
 
-
     Map getTypePropertiesAndDefaults(String typeName) {
         boolean foundInCache;
 
@@ -58,20 +57,22 @@ class TypeSystem {
         List<ItemType> itemTypeList = []
 
         while( t && !foundInCache ) {
-            ItemType itemType = cache[typeName]
+            ItemType itemType = cache[t]
 
             if(!itemType)
-                itemType = dbAccess.getItemTypeByName(typeName)
+                itemType = dbAccess.getItemTypeByName(t)
             else
                 foundInCache = true;
 
+            if(!itemType)
+                throw  new ValidationException("No such type: $t");
             itemTypeList.add itemType
             t = itemType.parentName
         }
 
         itemTypeList.reverse().inject( [ propertyDefs: [:], defaults:[:] ] ){Map accum, ItemType  type ->
-            [propertyDefs : (accum.propertyDefs << type.propertyDefs),
-            defaults : (accum.defaults  <<  type.defaults)]
+            [propertyDefs : ((accum.propertyDefs ) << (type.propertyDefs)),
+            defaults :   type.defaults ?  (accum.defaults  <<  type.defaults) : accum.defaults ]
         }
     }
 

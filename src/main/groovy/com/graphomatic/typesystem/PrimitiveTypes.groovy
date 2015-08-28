@@ -20,6 +20,9 @@ class PrimitiveTypes {
     static final public String  List = "list"
     static final public List<String>  All = [Number,Text,Boolean,URL,Link,DateTime,EmailAddress]
 
+    private static final String EMAIL_PATTERN = "[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})"
+    private static final Pattern emailPattern = Pattern.compile(EMAIL_PATTERN)
+
     static final public boolean isPrimitiveType(String typeName){
         All.contains(typeName)
     }
@@ -67,8 +70,6 @@ class PrimitiveTypes {
             }
     }
 
-    private static final String EMAIL_PATTERN = "[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})"
-    static Pattern emailPattern = Pattern.compile(EMAIL_PATTERN)
     static boolean isEmail(String text){
         Matcher m = emailPattern.matcher(text)
         m.matches()
@@ -103,8 +104,8 @@ class PrimitiveTypes {
                 }
                 return value
             case EmailAddress :
-                isEmail(value) ? value : null
-                break
+                return value ///isEmail(value) ? value : null
+
             default:
                 throw new ValidationException("Type: [$typeName] not a valid primitive type.")
         }

@@ -7,7 +7,7 @@ import com.graphomatic.typesystem.domain.PropertyDef
  */
 class DataElementDefValidator {
 
-    def validate(PropertyDef dataElementDef){
+    PropertyDef validate(PropertyDef dataElementDef){
         if (!dataElementDef.name)
             throw new ValidationException("Data element definition must have 'name'.")
 

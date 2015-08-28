@@ -282,14 +282,14 @@ class DbAccess {
     }
 
     ItemType getItemTypeByName(String name) {
-        mongo.find(
-                new Query(Criteria.where(name).is("name")),ItemType
+        mongo.findOne(
+                new Query(Criteria.where("name").is(name)),ItemType
         )
     }
 
     Relationship getRelationshipDefByName(String name) {
         mongo.find(
-                new Query(Criteria.where(name).is("name")),Relationship
+                new Query(Criteria.where('name').is(name)),Relationship
         )
     }
 

@@ -11,6 +11,8 @@ import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.graphomatic.util.DataLoader
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
 import org.springframework.stereotype.Service
 
@@ -113,6 +115,8 @@ class GraphItService {
         if(graphItem.data){
             typeSystem.validateProperties(  graphItem.type ?:  typeSystem.resolveType(  graphItem.typeName ), graphItem.data )
         }
+        if (!graphItem.typeName)
+            graphItem.typeName = TypeSystem.BASE_TYPE_NAME
         return dbAccess.createGraphItem(writeTransform(graphItem ));
     }
 
@@ -129,20 +133,43 @@ class GraphItService {
     List testDataFiles = [
             "sword.data.json"
     ]
+/*
+	String id
+    String name
+    List<Category> categories
+    Map<String,PropertyDef> propertyDefs
+    transient Set<String> hierarchy
+    List<Map> defaults
+    String parentName
+ */
 
-    Map testData = ["Categories":[],
-                    "ItemTypes":[],
-                    "GroupDef":[]
+    Map testData = [
+            "Categories":[],
+            "Types":[
+                    Person : [
+                      properties:[
+                              name: [type:"text", required: true],
+                              email : [type: "emailAddress", required: false]
+                      ]
+                    ],
+                    Verse : [
+                            properties: [
+                                verseId : [name:"verseId", type:'text', required:true],
+                                book : [name:"book",   type:'number', required:true],
+                                chapter : [name:"chapter",  type:'number', required:true],
+                                verse : [name:"verse",   type:'number', required:true],
+                            ]
+                    ]
+            ],
+            "GroupDef":[: ]
     ]
+
     def createTestData() {
 
+        String testDataString = new JsonBuilder(  testData ).toPrettyString()
         /// Read this from config files
-        DataLoader loader = new DataLoader(this)
-
-        testDataFiles.each { fname ->
-            loader.loadData   new FileInputStream( new File("../$fname") )
-        }
-
+        DataLoader loader = new DataLoader(this, typeSystem)
+        loader.loadData   new ByteArrayInputStream( testDataString.bytes )
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,6 +248,8 @@ class GraphItService {
     }
 
     ItemType createItemType(ItemType itemType) {
+        if (!itemType.parentName)
+            itemType.parentName = TypeSystem.BASE_TYPE_NAME
         postProcess(dbAccess.createItemType(itemType))
     }
 

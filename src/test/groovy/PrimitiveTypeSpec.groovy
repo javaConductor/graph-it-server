@@ -70,13 +70,13 @@ class PrimitiveTypeSpec extends  Specification {
         number == "lee@me.us"
     }
 
-    def "should parse bad email to null"(){
-        when:
-        def number = PrimitiveTypes.fromString("emailAddress", "lee/me.us")
-
-        then:
-        number == null
-    }
+//    def "should parse bad email to null"(){
+//        when:
+//        def number = PrimitiveTypes.fromString("emailAddress", "lee/me.us")
+//
+//        then:
+//        number == null
+//    }
 
     def "should parse url"(){
         when:

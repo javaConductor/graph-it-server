@@ -4,6 +4,7 @@ import com.graphomatic.Utils
 import com.graphomatic.service.DbAccess
 import com.graphomatic.service.GraphItService
 import com.graphomatic.service.RestService
+import com.graphomatic.typesystem.TypeSystem
 import com.mongodb.Mongo
 import com.mongodb.MongoClient
 import com.mongodb.ServerAddress
@@ -65,9 +66,16 @@ beans {
         ]
     }
 
+    typeSystem(TypeSystem){beanDefinition ->
+            beanDefinition.constructorArgs = [
+                    ref('dbAccess')
+            ]
+    }
+
     graphItService(GraphItService){beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('dbAccess')
+            ref('dbAccess'),
+            ref('typeSystem')
         ]
     }
 

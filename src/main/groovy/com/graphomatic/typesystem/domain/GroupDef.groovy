@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 class GroupDef {
     @Id
+
     String id
     String name
     GroupType type
