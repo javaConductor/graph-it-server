@@ -95,19 +95,21 @@ class GraphItService {
     GraphItem readTransform( GraphItem graphItem ){
         if(graphItem.typeName)
             graphItem.type = typeSystem.resolveType(graphItem.typeName)
+        graphItem
     }
 
     GraphItem writeTransform( GraphItem graphItem ){
-        if(!graphItem.typeName)
-            graphItem.typeName = "Empty"
+        if (!graphItem.typeName)
+            graphItem.typeName = TypeSystem.BASE_TYPE_NAME
+        graphItem
     }
 
     GraphItem updateGraphItemPosition(String graphItemId, long x, long y) {
-        return dbAccess.updatePosition(graphItemId, x, y);
+        return readTransform( dbAccess.updatePosition(graphItemId, x, y));
     }
 
     GraphItem updateGraphItem(GraphItem graphItem) {
-        return dbAccess.update(graphItem);
+        return writeTransform(dbAccess.update(graphItem));
     }
 
     GraphItem createGraphItem(GraphItem graphItem) {
@@ -115,9 +117,7 @@ class GraphItService {
         if(graphItem.data){
             typeSystem.validateProperties(  graphItem.type ?:  typeSystem.resolveType(  graphItem.typeName ), graphItem.data )
         }
-        if (!graphItem.typeName)
-            graphItem.typeName = TypeSystem.BASE_TYPE_NAME
-        return dbAccess.createGraphItem(writeTransform(graphItem ));
+        return readTransform(dbAccess.createGraphItem(writeTransform(graphItem )))
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////

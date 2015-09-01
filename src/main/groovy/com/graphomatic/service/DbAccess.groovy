@@ -276,8 +276,8 @@ class DbAccess {
     }
 
     Category getCategoryByName(String name) {
-        mongo.find(
-                new Query(Criteria.where(name).is("name")),Category
+        mongo.findOne(
+                new Query(Criteria.where("name").is(name)),Category
         )
     }
 
@@ -310,5 +310,15 @@ class DbAccess {
     String getTypeOfItem(String s) {
         def item = getGraphItem(s)
         item?.typeName
+    }
+
+    ItemType getType(String typeId) {
+        mongo.findById(typeId, ItemType)
+    }
+
+    ItemType getTypeByName(String name) {
+        mongo.findOne(
+                new Query(Criteria.where('name').is(name)),ItemType
+        )
     }
 }

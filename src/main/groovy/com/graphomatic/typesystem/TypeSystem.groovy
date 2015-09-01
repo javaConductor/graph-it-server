@@ -1,5 +1,6 @@
 package com.graphomatic.typesystem
 
+import com.graphomatic.domain.Category
 import com.graphomatic.domain.Property
 import com.graphomatic.service.DbAccess
 import com.graphomatic.typesystem.domain.ItemType
@@ -11,13 +12,14 @@ import com.graphomatic.typesystem.validation.ValidationException
  */
 class TypeSystem {
     static final String BASE_TYPE_NAME='$thing'
+    def baseCategory = new Category(name: "ALL")
     def baseItemType = new ItemType(
             name: BASE_TYPE_NAME,
             propertyDefs: [
                 createDateTime: [name : "createDateTime", collectionType: '', typeName: 'dateTime', required: true] as PropertyDef
                 ],
             hierarchy: [],
-            categories: ["ALL"]
+            categories: []
             )
 
     DbAccess dbAccess
@@ -26,7 +28,30 @@ class TypeSystem {
     def TypeSystem(DbAccess dbAccess) {
         this.dbAccess = dbAccess
         cache = new LRUTypeCache()
+        // ensure the existence ofthe base type in db
+        baseItemType = ensureBaseType(BASE_TYPE_NAME )
         cache[baseItemType.name]=baseItemType
+    }
+
+    ItemType ensureBaseType(String baseTypeName) {
+        Category cat =  ensureBaseCategory("ALL")
+        ItemType t = dbAccess.getTypeByName(baseTypeName);
+        if (!t){
+            baseItemType.categories.add(cat)
+            t = dbAccess.createItemType(baseItemType)
+        }
+        t;
+    }
+    Category ensureBaseCategory(String baseCategoryName) {
+        Category cat = dbAccess.getCategoryByName(baseCategoryName);
+        if (!cat){
+            cat = dbAccess.createCategory(baseCategory)
+        }
+        cat;
+    }
+
+    List<ItemType> getAllTypes() {
+        dbAccess.getAllItemTypes()
     }
 
     ItemType resolveType(String typeName) {
@@ -74,13 +99,13 @@ class TypeSystem {
             [propertyDefs : ((accum.propertyDefs ) << (type.propertyDefs)),
             defaults :   type.defaults ?  (accum.defaults  <<  type.defaults) : accum.defaults ]
         }
-    }
+    };
 
     List getTypeHierarchy(ItemType itemType) {
         return [itemType.name] << (itemType.parentName
                 ? getTypeHierarchy(resolveType(itemType.parentName))
                 : [])
-    }
+    };
 
     Map<String, Property> createDefaultInitData(ItemType itemType, Map initProperties) {
         itemType.propertyDefs.collectEntries {String propertyName, PropertyDef propertyDef ->
@@ -184,5 +209,13 @@ class TypeSystem {
                         canAssign(pdef.name, getReferenceType(dataList[ name ]?.value)?.name)
             )
         }
+    }
+
+    ItemType getType(String  typeId) {
+        dbAccess.getType(typeId)
+    }
+
+    ItemType getTypeByName(String name) {
+        dbAccess.getTypeByName(name)
     }
 }

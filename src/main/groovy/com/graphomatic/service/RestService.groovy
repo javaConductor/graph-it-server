@@ -7,10 +7,13 @@ import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
+import com.graphomatic.typesystem.TypeSystem
+import com.graphomatic.typesystem.domain.ItemType
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import io.github.javaconductor.gserv.converters.FormData
 import net.sf.json.groovy.JsonSlurper
+import org.apache.http.protocol.HTTP
 
 /**
  * Created by lcollins on 6/28/2015.
@@ -19,9 +22,11 @@ import net.sf.json.groovy.JsonSlurper
 class RestService {
     def stopFn
     GraphItService graphItService
+    TypeSystem typeSystem
 
-    def RestService(GraphItService graphItService) {
+    def RestService(GraphItService graphItService, TypeSystem typeSystem) {
         this.graphItService = graphItService
+        this.typeSystem = typeSystem
     }
 
     def createService() {
@@ -152,6 +157,40 @@ class RestService {
         m
     }
 
+    def typeSystemRes = gServ.resource("types") {
+
+        /// get all types
+        get("") { ->
+            writeJson typeSystem.getAllTypes().collect { itemType ->
+                [links: links(itemType)] + (asMap(itemType))
+            }
+        }
+
+        /// get a type
+        get(':id') { id ->
+            ItemType itemType = typeSystem.getType(id)
+            if(!itemType)
+                error(404, "No such type: $id")
+            else
+                writeJson asMap(itemType) + [links: links(itemType)]
+        }
+
+        /// get a type
+        get('byName/:typeName') { typeName ->
+            ItemType itemType = typeSystem.getTypeByName(typeName)
+            if(!itemType)
+                error(404, "No such type: $typeName")
+            else
+            writeJson asMap(itemType) + [links: links(itemType)]
+        }
+        links { ItemType itemType ->
+            [
+                    [rel: "self", href: "/types/${itemType.id}", method: "GET"]
+            ]
+
+        }
+    }
+
     def graphItemRes = gServ.resource("graph-item") {
 
         /// get all graph-items
@@ -197,7 +236,7 @@ class RestService {
         post('/form') { FormData formData ->
             String title = formData.getValue("title")
             String cat = formData.getValue("category")
-            String typeName = formData.getValue("typeName") ?: ""
+            String typeName = formData.getValue("typeName") ?: TypeSystem.BASE_TYPE_NAME
             Position pos =  (
                         formData.getValue("position.x") && formData.getValue("position.y")
                         ) ?  new Position(
@@ -271,6 +310,7 @@ class RestService {
             resource graphRelationshipRes
             resource graphCategoryRes
             resource graphItemImageRes
+            resource typeSystemRes
         }
     }
 

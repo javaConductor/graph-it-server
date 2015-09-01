@@ -1,1 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
+build/classes/main/com/graphomatic/service/RestService$_createService_closure8$_closure38.class
+build/
+.idea/libraries/Gradle__org_codehaus_gpars_gpars_1_1_0.xml
+.idea/
+.gradle/
