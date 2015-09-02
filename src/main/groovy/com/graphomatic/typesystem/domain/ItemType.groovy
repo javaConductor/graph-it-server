@@ -2,6 +2,7 @@ package com.graphomatic.typesystem.domain
 
 import com.graphomatic.domain.Category
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 /**
@@ -40,6 +41,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 class ItemType {
 	@Id
 	String id
+	@Indexed(unique = true)
     String name
     List<Category> categories = []
     Map<String,PropertyDef> propertyDefs = [:]

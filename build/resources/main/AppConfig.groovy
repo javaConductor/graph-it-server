@@ -84,7 +84,7 @@ beans {
     ////////////////////////////////////////////////////////////////
     restService(RestService) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('graphItService')
+            ref('graphItService'), ref('typeSystem')
         ]
     }
 }
