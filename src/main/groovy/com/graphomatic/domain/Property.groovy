@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document
 /**
  * Created by lcollins on 6/29/2015.
  */
+//TODO Beginning to think this is NOT needed - should NOT wrap value
+// nothing new here
 @Document
 class Property {
     @Id

@@ -10,11 +10,11 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 class GroupDef {
     @Id
-
     String id
     String name
     GroupType type
-    List<ItemType> validMemberTypes
+    List<String> validMemberTypeNames
+    transient List<ItemType> validMemberTypes
     String defaultTemplate
     List<PropertyDef> groupPropertyDefs
 }

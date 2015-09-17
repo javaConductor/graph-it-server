@@ -234,6 +234,7 @@ class DbAccess {
      * @return GraphItem containing the new ItemImage
      */
     GraphItem addItemImage(ItemImage itemImage){
+
         if (! itemImage.graphItemId){
             throw new IllegalArgumentException("Graph item id must be present in ItemImage.")
         }
@@ -320,5 +321,10 @@ class DbAccess {
         mongo.findOne(
                 new Query(Criteria.where('name').is(name)),ItemType
         )
+    }
+
+    Category updateCategory(Category category) {
+        mongo.save(category)
+        category
     }
 }

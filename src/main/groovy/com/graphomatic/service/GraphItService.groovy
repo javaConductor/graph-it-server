@@ -29,7 +29,7 @@ class GraphItService {
         this.dbAccess = dbAccess
         this.typeSystem = typeSystem
 
-        if (! getAllGraphItems().findAll { it }.size()){
+        if (!getAllGraphItems().findAll { it }.size()) {
             try {
                 createTestData();
             } catch (Exception e) {
@@ -49,6 +49,10 @@ class GraphItService {
         return dbAccess.getCategory(id);
     }
 
+    Category updateCategory(Category cat) {
+        return dbAccess.updateCategory(cat);
+    }
+
     List<Category> createCategories(List<Category> categories) {
         dbAccess.createCategories(categories);
     }
@@ -61,7 +65,7 @@ class GraphItService {
     // Graph Item
     //////////////////////////////////////////////////////////////////////////////////////////////////
     GraphItem getGraphItem(String id) {
-        return readTransform( dbAccess.getGraphItem(id) )
+        return readTransform(dbAccess.getGraphItem(id))
     }
 
     boolean removeGraphItem(String id) {
@@ -70,42 +74,42 @@ class GraphItService {
     }
 
     List<GraphItem> getAllGraphItems() {
-        return dbAccess.getAllGraphItems().collect( this.&readTransform)
+        return dbAccess.getAllGraphItems().collect(this.&readTransform)
     }
 
     GraphItem setAsMainImage(String graphItemId, String imageId) {
         GraphItem graphItem = dbAccess.getGraphItem(graphItemId)
-        if (! graphItemId)
+        if (!graphItemId)
             return null
 
         def both = graphItem.images.split { img ->
             img.id == imageId
         }
-        if(both[0].empty)
+        if (both[0].empty)
             return null
-        graphItem.images = (both[0] ) + ( both[1] )
+        graphItem.images = (both[0]) + (both[1])
 
         dbAccess.update(graphItem)
     }
 
-    GraphItem updateGraphItemNotes(String graphItemId , String notes) {
+    GraphItem updateGraphItemNotes(String graphItemId, String notes) {
         dbAccess.updateGraphItemNotes(graphItemId, notes)
     }
 
-    GraphItem readTransform( GraphItem graphItem ){
-        if(graphItem.typeName)
+    GraphItem readTransform(GraphItem graphItem) {
+        if (graphItem.typeName)
             graphItem.type = typeSystem.resolveType(graphItem.typeName)
         graphItem
     }
 
-    GraphItem writeTransform( GraphItem graphItem ){
+    GraphItem writeTransform(GraphItem graphItem) {
         if (!graphItem.typeName)
             graphItem.typeName = TypeSystem.BASE_TYPE_NAME
         graphItem
     }
 
     GraphItem updateGraphItemPosition(String graphItemId, long x, long y) {
-        return readTransform( dbAccess.updatePosition(graphItemId, x, y));
+        return readTransform(dbAccess.updatePosition(graphItemId, x, y));
     }
 
     GraphItem updateGraphItem(GraphItem graphItem) {
@@ -114,17 +118,19 @@ class GraphItService {
 
     GraphItem createGraphItem(GraphItem graphItem) {
         // before we write it, lets check it
-        if(graphItem.data){
-            typeSystem.validateProperties(  graphItem.type ?:  typeSystem.resolveType(  graphItem.typeName ), graphItem.data )
+        if (graphItem.data) {//TODO  check the value and return the error message
+            typeSystem.validateProperties(graphItem.type ?: typeSystem.resolveType(graphItem.typeName), graphItem.data)
         }
-        return readTransform(dbAccess.createGraphItem(writeTransform(graphItem )))
+        ///TODO should we store the data raw or in Property objects?????
+        /// maybe we should create the Property objects here
+        return readTransform(dbAccess.createGraphItem(writeTransform(graphItem)))
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // Group
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    Group createGroup( Group group){
-        dbAccess.createGroup( group )
+    Group createGroup(Group group) {
+        dbAccess.createGroup(group)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,43 +139,337 @@ class GraphItService {
     List testDataFiles = [
             "sword.data.json"
     ]
-/*
-	String id
-    String name
-    List<Category> categories
-    Map<String,PropertyDef> propertyDefs
-    transient Set<String> hierarchy
-    List<Map> defaults
-    String parentName
- */
 
     Map testData = [
-            "Categories":[],
-            "Types":[
-                    Person : [
-                      properties:[
-                              name: [type:"text", required: true],
-                              email : [type: "emailAddress", required: false]
-                      ]
+            "Categories"   : [
+                    "People"  : [
+                            children: [
+                                    Family : [:],
+                                    Peers  : [:],
+                                    Friends: [:]
+                            ]
                     ],
-                    Verse : [
-                            properties: [
-                                verseId : [name:"verseId", type:'text', required:true],
-                                book : [name:"book",   type:'number', required:true],
-                                chapter : [name:"chapter",  type:'number', required:true],
-                                verse : [name:"verse",   type:'number', required:true],
+                    "Electronics"   : [:            ],
+                    "Music"   : [:],
+                    "Location": [:],
+                    "Business": [:],
+                    "Software": [
+                            "children": [
+                                    "Software Design"     : [:],
+                                    "Software Deployment" : [:],
+                                    "Software Development": [
+                                            "children": [
+                                                    "Embedded App"    : [:],
+                                                    "Desktop App"     : [:],
+                                                    "Web App"         : [:],
+                                                    "Web Service"     : [:],
+                                                    "Phone/Tablet App": [:]
+                                            ]
+                                    ]
                             ]
                     ]
             ],
-            "GroupDef":[: ]
+            "Types" : [
+                    Person: [
+                            categories: ["People"],
+                            properties: [
+                                    "First Name": [type: "text", required: true],
+                                    "Last Name" : [type: "text", required: true],
+                                    "email"     : [type: "emailAddress", required: false]
+                            ]
+                    ],
+                    "Electronics": [
+                            categories: ["ALL"],
+                            properties: [
+                                    "Serial Number":  [type: 'text', required: true],
+                                    "Manufacturer":  [type: 'text', required: false],
+                                    "Vendor":  [type: 'text', required: false]
+                            ]
+                    ],
+                    "Computer": [
+                            parent: "Electronics",
+                            properties: [
+                                        "Host Name":  [type: 'text', required: true],
+                                        "Operating System":  [type: 'text', required: false],
+                                        "Memory (mb)":  [type: 'number', required: false],
+                                        "IP Address":  [type: 'text', required: false],
+                                        "Description":  [type: 'text', required: false]
+                            ]
+                    ],
+
+                    "Smart Phone": [
+                            parent: "Electronics",
+                            properties: [
+                                    "Phone Number":  [type: 'text', required: true],
+                            ]
+                    ],
+                    "Tablet": [
+                            parent: "Electronics",
+                            properties: [:]
+                    ],
+                    "ServerComputer" : [
+                            parent: "Computer",
+                            properties: [:]
+                    ],
+                    "ClientComputer" : [
+                            parent: "Computer",
+                            properties: [:]
+                    ],
+                    "Load Balancer" : [
+                            parent: "Computer",
+                            properties: [:]
+                    ],
+                    Verse : [
+                            properties: [
+                                    verseId: [name: "verseId", type: 'text', required: true],
+                                    book   : [name: "book", type: 'number', required: true],
+                                    chapter: [name: "chapter", type: 'number', required: true],
+                                    verse  : [name: "verse", type: 'number', required: true],
+                            ]
+                    ]
+            ],
+            "Relationships": [
+                    "Family"        : [
+                            "type"      : "simple",
+                            "categories": ["Family"],
+                            "notes"     :   "Family"
+                    ],
+                    "Spouse": [
+                            "type"      : "simple",
+                            "parent"      : "Family",
+                            "categories"  : [
+                                    "Family"
+                            ]
+                    ],
+                    "Wife": [
+                            "type"      : "simple",
+                            "parent"      : "Spouse",
+                            "reversedName": "Husband",
+                            "categories"  : [
+                                    "Family"
+                            ]
+                    ],
+                    "Husband": [
+                            "type"      : "simple",
+                            "parent"      : "Spouse",
+                            "reversedName": "Wife",
+                            "categories"  : [
+                                    "Family"
+                            ]
+                    ],
+                    "Child"         : [
+                            "type"        : "simple",
+                            "reversedName": "Parent",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "parent"      : "Family",
+                            "notes"       : ""
+                    ],
+                    "Son"         : [
+                            "type"        : "simple",
+                            "reversedName": "Parent",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "parent"      : "Child",
+                            "notes"       : ""
+                    ],
+                    "Daughter"         : [
+                            "type"        : "simple",
+                            "reversedName": "Parent",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "parent"      : "Child",
+                            "notes"       : ""
+                    ],
+                    "Parent"        : [
+                            "type"        : "simple",
+                            "reversedName": "Child",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "parent"      : "Family",
+                            "notes"       : ""
+                    ],
+                    "Father"        : [
+                            "type"        : "simple",
+                            "reversedName": "Child",
+                            "parent"      : "Parent",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "notes"       : ""
+                    ],
+                    "Mother"        : [
+                            "type"        : "simple",
+                            "reversedName": "Child",
+                            "parent"      : "Parent",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "notes"       : ""
+                    ],
+
+                    "Sibling"       : [
+                            "type"        : "simple",
+                            "reversedName": "Sibling",
+                            "parent"      : "Family",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "notes"       : ""
+                    ],
+
+                    "Brother"       : [
+                            "type"        : "simple",
+                            "reversedName": "Sibling",
+                            "parent"      : "Sibling",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "notes"       : ""
+                    ],
+                    "Sister"        : [
+                            "type"        : "simple",
+                            "reversedName": "Sibling",
+                            "parent"      : "Sibling",
+                            "categories"  : [
+                                    "Family"
+                            ],
+                            "notes"       : ""
+                    ],
+
+                    "Aunt"          : [
+                            "type"      : "simple",
+                            "parent"    : "Family",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+                    "Uncle"         : [
+                            "type"      : "simple",
+                            "parent"    : "Family",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+                    "In Law"        : [
+                            "type"      : "simple",
+                            "parent"    : "Family",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+
+
+                    "Brother In Law": [
+                            "type"      : "simple",
+                            "parent"    : "In Law",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+
+
+                    "Sister In Law" : [
+                            "type"      : "simple",
+                            "parent"    : "In Law",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+
+                    "Mother In Law" : [
+                            "type"      : "simple",
+                            "parent"    : "In Law",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+
+                    "Father In Law" : [
+                            "type"      : "simple",
+                            "parent"    : "In Law",
+                            "categories": [
+                                    "Family"
+                            ],
+                            "notes"     : ""
+                    ],
+
+
+                    "Composed Of"   : [
+                            "type"        : "simple",
+                            "reversedName": "Part Of",
+                            "categories"  : [],
+                            "notes"       : ""
+                    ],
+                    "Part Of"       : [
+                            "type"        : "simple",
+                            "reversedName": "Composed Of",
+                            "categories"  : [],
+                            "parent"      : "Family",
+                            "notes"       : ""
+                    ],
+                    "Aggregates"    : [
+                            "type"        : "simple",
+                            "reversedName": "Child",
+                            "parent"      : "Uses",
+                            "notes"       : ""
+                    ],
+                    "Uses"          : [
+                            "type"      : "simple",
+                            "categories": [],
+                            "notes"     : ""
+                    ],
+                    "Resides At"    : [
+                            "type"      : "simple",
+                            "categories": [
+                                    "Location"
+                            ],
+                            "parent"    : "Family",
+                            "notes"     : ""
+                    ],
+                    "Located At"    : [
+                            "type"      : "simple",
+                            "categories": [
+                                    "Location"
+                            ],
+                            "notes"     : ""
+                    ],
+                    "Calls"         : [
+                            "type"      : "simple",
+                            "categories": [
+                                    "Software Design"
+                            ],
+                            "parent"    : "Uses",
+                            "notes"     : ""
+                    ],
+                    "Called By"     : [
+                            "type"      : "simple",
+                            "categories": [
+                                    "Software"
+                            ],
+                            "parent"    : "Uses",
+                            "notes"     : ""
+                    ]
+            ],
+            "GroupDef"     : [:]
     ]
 
     def createTestData() {
 
-        String testDataString = new JsonBuilder(  testData ).toPrettyString()
+        String testDataString = new JsonBuilder(testData).toPrettyString()
         /// Read this from config files
         DataLoader loader = new DataLoader(this, typeSystem)
-        loader.loadData   new ByteArrayInputStream( testDataString.bytes )
+        loader.loadData new ByteArrayInputStream(testDataString.bytes)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,15 +488,18 @@ class GraphItService {
     }
 
     Relationship getRelationshipDefByName(String name) {
+        if (!name)
+            return null
         dbAccess.getRelationshipDefByName(name)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // Item Relationship
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    List<ItemRelationship> getAllItemRelationships( ) {
+    List<ItemRelationship> getAllItemRelationships() {
         dbAccess.getAllItemRelationships();
     }
+
     List<ItemRelationship> getRelationshipsForItems(List<String> itemIds) {
         dbAccess.getRelationshipForItems(itemIds);
     }
@@ -223,10 +526,10 @@ class GraphItService {
         dbAccess.getImageData(path)
     }
 
-    ImageData createItemImage(String  graphItemId,
+    ImageData createItemImage(String graphItemId,
                               InputStream inputStream,
                               String contentType) {
-        dbAccess.createItemImage(graphItemId,contentType,inputStream)
+        dbAccess.createItemImage(graphItemId, contentType, inputStream)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,18 +550,21 @@ class GraphItService {
         dbAccess.getAllItemTypes().collect(postProcess)
     }
 
-    ItemType createItemType(ItemType itemType) {
+    ItemType createItemType(ItemType itemType, boolean doPostProcess = true) {
         if (!itemType.parentName)
             itemType.parentName = TypeSystem.BASE_TYPE_NAME
-        postProcess(dbAccess.createItemType(itemType))
+        ItemType saved = (dbAccess.createItemType(itemType))
+        if(doPostProcess)
+            saved = postProcess(saved)
+        saved
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // Common
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    ItemType postProcess( ItemType itemType ){
-        if(itemType){
-            def inherited = typeSystem.getTypePropertiesAndDefaults( itemType.name )
+    ItemType postProcess(ItemType itemType) {
+        if (itemType) {
+            def inherited = typeSystem.getTypePropertiesAndDefaults(itemType.name)
             itemType.defaults = inherited.defaults
             itemType.propertyDefs = inherited.propertyDefs
         }

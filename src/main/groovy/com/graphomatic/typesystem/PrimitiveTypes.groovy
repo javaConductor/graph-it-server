@@ -53,7 +53,9 @@ class PrimitiveTypes {
                     }
                     break
                 case DateTime :
-                    SimpleDateFormat sdf = new SimpleDateFormat("YYYYmmDDHHMMSS")
+                    //TODO determine dateFormat  between client and server
+//                  SimpleDateFormat sdf = new SimpleDateFormat("YYYYmmDDHHMMSS")
+                    SimpleDateFormat sdf = new SimpleDateFormat("mm/DD/YYYY HH:MM:SS")
                     try {
                         sdf.parse(value)
                         return true
@@ -68,6 +70,10 @@ class PrimitiveTypes {
                 case null:
                     return  false
             }
+    }
+
+    static Date parseDate(String s){
+
     }
 
     static boolean isEmail(String text){

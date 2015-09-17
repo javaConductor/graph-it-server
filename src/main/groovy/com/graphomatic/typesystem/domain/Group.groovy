@@ -1,6 +1,6 @@
 package com.graphomatic.typesystem.domain
 
-import com.graphomatic.domain.Property
+
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -13,5 +13,5 @@ class Group {
     String id
     String name
     GroupDef groupDef
-    Map<String, Property> groupProperties
+    Map<String, Object> groupProperties
 }

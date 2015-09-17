@@ -31,12 +31,12 @@ class DataLoader {
     def loadData(InputStream is) {
 
         def data = new JsonSlurper().parse(is)
-        List<Category> categories
-        List<Relationship> relationshipDefs
+//        Map<String, Category> categories
+        Map<String, Relationship> relationshipDefs
         Map<String, ItemType> types
 
         if (data.Categories)
-            categories = loadCategories(data.Categories);
+            loadCategories(data.Categories);
         if (data.Relationships)
             relationshipDefs = loadRelationships(data.Relationships)
         if (data.Types)
@@ -54,6 +54,48 @@ class DataLoader {
     *   description: "We are family!!"
     * }]
     * */
+    /*
+    {
+  "Categories": [
+    {
+      "name": "People",
+      "children": {
+        "Family": {},
+        "Peers": {},
+        "Friends": {}
+      }
+    },
+    {
+      "name": "Music"
+    },
+    {
+      "name": "Location"
+    },
+    {
+      "name": "Business"
+    },
+    {
+      "name": "Software",
+      "children": {
+          "Software Design":{
+          },
+          "Software Deployment":{
+          },
+          "Software Application":{
+            "children": {
+                "Embedded App":{},
+                "Desktop App":{},
+                "Web App": {},
+                "Web Service": {},
+                "Phone/Tablet App":{}
+
+            }
+          }
+      }
+    }
+  ],
+
+     */
 
     /**
      * Load the categories from data set
@@ -61,24 +103,33 @@ class DataLoader {
      * @param jsonCategoryList
      * @return
      */
-    List<Category> loadCategories(Object jsonCategoryList) {
-        return jsonCategoryList.collect {
-            def cat = categoryFromJson(it)
-            return graphItService.createCategories([it])
-        }.flatten()
+    Map<String, Category> loadCategories(Map jsonCategoryMap) {
+        return jsonCategoryMap.collectEntries {catName, catDef ->
+            [(catName): categoryFromJson(catDef + [name : catName])]
+        }
     }
 
-    private Category categoryFromJson(jsonCategory) {
-        Category parentCat
+    private Category categoryFromJson(jsonCategory, Category parentCat=null) {
+
         if (!jsonCategory.name)
             throw new ValidationException("Categories must have names.");
-        if (jsonCategory.parent) {
-            parentCat = graphItService.getCategoryByName(jsonCategory.parent)
-            if (!parentCat) {
-                throw new ValidationException("No such parent: ${jsonCategory.parent}  for Category: ${jsonCategory.name}");
-            }
-        }
-        new Category(name: jsonCategory.name, parent: parentCat)
+        Category cat = new Category(
+                name: jsonCategory.name,
+                description: jsonCategory.description,
+                parent: parentCat
+        )
+        cat = graphItService.createCategories([cat])[0]
+        //// now do the children
+
+        List childCategories = jsonCategory.children ?
+                jsonCategory.children.keySet().collect {childName ->
+                    def child = jsonCategory.children[ childName ]
+                    categoryFromJson(child + [name: childName], cat)
+                } : []
+
+        cat.children = childCategories
+        //graphItService.updateCategory(cat)
+        cat
     }
 
     private List<Category> categoryListFromJson(jsonCategoryList) {
@@ -105,16 +156,11 @@ class DataLoader {
  * @return
  */
     private Relationship relationshipFromJson(jsonRelationship) {
-        Relationship parentRel
+        String parentName
         if (!jsonRelationship.name)
             throw new ValidationException("Relationship must have name.");
-        if (jsonRelationship.parent) {
-            parentRel = graphItService.getRelationshipDefByName(jsonRelationship.parent)
-            if (!parentRel) {
-                throw new ValidationException("No such parent: ${jsonRelationship.parent}  for Relationship: ${jsonRelationship.name}");
-            }
-        }
-        new Relationship(name: jsonRelationship.name, parent: parentRel)
+
+        new Relationship(name: jsonRelationship.name, parentName: jsonRelationship.parent )
     }
     /**
      * Load the relationshipTypes from data set
@@ -122,10 +168,10 @@ class DataLoader {
      * @param jsonRelationships
      * @return
      */
-    List<Relationship> loadRelationships(jsonRelationships) {
-        jsonRelationships.collect { it ->
-            def newrel = relationshipFromJson(it)
-            graphItService.createRelationship(newrel)
+    Map<String, Relationship> loadRelationships(Map jsonRelationships) {
+        jsonRelationships.collectEntries { relationshipName, rel ->
+            def newrel = relationshipFromJson(rel + [name : relationshipName])
+            [relationshipName : graphItService.createRelationship(newrel)]
         }
     }
 
@@ -208,7 +254,7 @@ class DataLoader {
                 new ItemType(
                         categories: categories,
                         propertyDefs: dataDefs,
-                        parentName: parentType,
+                        parentName: jsonItemType.parent,
                         name: typeName
                 )
         )
@@ -220,8 +266,8 @@ class DataLoader {
         jsonItemTypes.collectEntries { typeName, jsonItem ->
             println "loading Type $typeName"
             def newtype = itemTypeFromJson(typeName, jsonItem)
-            println "Before "+new JsonBuilder(newtype).toPrettyString()
-            newtype = graphItService.createItemType( newtype )
+           // println "Before "+new JsonBuilder(newtype).toPrettyString()
+            newtype = graphItService.createItemType( newtype, false)
             println "After "+new JsonBuilder(newtype).toPrettyString()
             [ (typeName) : ( newtype ) ]
         }

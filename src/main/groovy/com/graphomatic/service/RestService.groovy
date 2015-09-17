@@ -9,6 +9,7 @@ import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.ItemType
+import groovy.json.JsonParser
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import io.github.javaconductor.gserv.converters.FormData
@@ -157,6 +158,12 @@ class RestService {
         m
     }
 
+    def prepareItemType = {ItemType  itemType ->
+
+        Map m = Utils.persistentFields(graphItem.properties)
+        m
+    }
+
     def typeSystemRes = gServ.resource("types") {
 
         /// get all types
@@ -236,7 +243,12 @@ class RestService {
         post('/form') { FormData formData ->
             String title = formData.getValue("title")
             String cat = formData.getValue("category")
-            String typeName = formData.getValue("typeName") ?: TypeSystem.BASE_TYPE_NAME
+            String jsonDataString = formData.getValue("data")
+            Map jsonData = new groovy.json.JsonSlurper().parseText(jsonDataString)
+            String typeName
+            def typeId = formData.getValue("type")
+            def type = typeSystem.getType(typeId)
+            typeName = type?.name ?: TypeSystem.BASE_TYPE_NAME
             Position pos =  (
                         formData.getValue("position.x") && formData.getValue("position.y")
                         ) ?  new Position(
@@ -248,6 +260,7 @@ class RestService {
             GraphItem g = graphItService.createGraphItem( new GraphItem(title: title,
                     typeName: typeName,
                     images: [],
+                    data: jsonData,
                     position : pos,
                     categories: category ? [category] : []))
             if(formData.files) {

@@ -51,7 +51,11 @@ class TypeSystem {
     }
 
     List<ItemType> getAllTypes() {
-        dbAccess.getAllItemTypes()
+        dbAccess.getAllItemTypes().collect {
+            addInherited(it)
+            cache[it.name] = it
+            it
+        }
     }
 
     ItemType resolveType(String typeName) {
@@ -64,14 +68,25 @@ class TypeSystem {
 
         ItemType itemType = dbAccess.getItemTypeByName(typeName)
         if (!itemType)
-            return null;
+            return null
 
-        Map propertiesAndDefaults = this.getTypePropertiesAndDefaults(typeName)
+        itemType = addInherited(itemType);
+        if (!itemType)
+            return null
+
+        cache[ typeName ] = itemType
+        itemType
+    }
+
+    ItemType addInherited( ItemType itemType){
+
+        if(!itemType)
+            return null
+        Map propertiesAndDefaults = this.getTypePropertiesAndDefaults(itemType.name)
         itemType.defaults = propertiesAndDefaults.defaults
         itemType.propertyDefs = propertiesAndDefaults.propertyDefs
         itemType.hierarchy = getTypeHierarchy(itemType)
 
-        cache[typeName] = itemType
         itemType
     }
 
@@ -107,40 +122,42 @@ class TypeSystem {
                 : [])
     };
 
-    Map<String, Property> createDefaultInitData(ItemType itemType, Map initProperties) {
-        itemType.propertyDefs.collectEntries {String propertyName, PropertyDef propertyDef ->
-            if (propertyDef.required &&  !initProperties[propertyName] && !itemType?.defaults[propertyName]) {
-                throw new ValidationException("Could not create item of type ${itemType.name}: No value for required property: ${propertyName}")
-            }
-            [(propertyName) : createProperty(propertyDef, initProperties[propertyName] ?: itemType.defaults[propertyName])]
-        }
-    }
-
-    Property createProperty(PropertyDef propertyDef, Object value, boolean validate = false) {
-        // if we have a "value" - a literal value of a primitive type
-        switch (propertyDef.collectionType) {
-
-            case "list":
-                List values = value instanceof List ? value : [value]
-                if (validate) {
-                    validateValues(propertyDef.typeName, values)
-                }
-                values = fixTypes(propertyDef, values)
-                new Property(name: propertyDef.name, value: values, collectionType: "list")
-                break;
-
-            case "":
-            case null:
-                if (validate) {
-                    validateValues(propertyDef.typeName, [value])
-                }
-                new Property(name: propertyDef.name, value: fixType(propertyDef, value), collectionType: "")
-                break;
-
-            default:
-                throw new ValidationException("Bad collectionType: ${propertyDef.collectionType}")
-        }
-    }
+//    @Deprecated
+//    Map<String, Property> createDefaultInitData(ItemType itemType, Map initProperties) {
+//        itemType.propertyDefs.collectEntries {String propertyName, PropertyDef propertyDef ->
+//            if (propertyDef.required &&  !initProperties[propertyName] && !itemType?.defaults[propertyName]) {
+//                throw new ValidationException("Could not create item of type ${itemType.name}: No value for required property: ${propertyName}")
+//            }
+//            [(propertyName) : createProperty(propertyDef, initProperties[propertyName] ?: itemType.defaults[propertyName])]
+//        }
+//    }
+//
+//    @Deprecated
+//    Property createProperty(PropertyDef propertyDef, Object value, boolean validate = false) {
+//        // if we have a "value" - a literal value of a primitive type
+//        switch (propertyDef.collectionType) {
+//
+//            case "list":
+//                List values = value instanceof List ? value : [value]
+//                if (validate) {
+//                    validateValues(propertyDef.typeName, values)
+//                }
+//                values = fixTypes(propertyDef, values)
+//                new Property(name: propertyDef.name, value: values, collectionType: "list")
+//                break;
+//
+//            case "":
+//            case null:
+//                if (validate) {
+//                    validateValues(propertyDef.typeName, [value])
+//                }
+//                new Property(name: propertyDef.name, value: fixType(propertyDef, value), collectionType: "")
+//                break;
+//
+//            default:
+//                throw new ValidationException("Bad collectionType: ${propertyDef.collectionType}")
+//        }
+//    }
 
     List fixTypes(PropertyDef propertyDef, List values){
         values.collect {
@@ -152,9 +169,9 @@ class TypeSystem {
         PrimitiveTypes.fromString(typeName, value)
     }
 
-    boolean isReference( Object o){
+    boolean isReference( Object o ){
         String s = o?.toString()?.trim()
-        (s.startsWith('$ref:[') && s.endsWith(']') )
+        (s?.startsWith('$ref:[') && s?.endsWith(']') )
     }
 
     boolean validateValues(String typeName, List values) {
@@ -203,7 +220,7 @@ class TypeSystem {
         dataList.keySet().every { String name ->
             PropertyDef pdef = itemType.propertyDefs[name]
             PrimitiveTypes.isPrimitiveType ( pdef?.typeName ) ? (
-                PrimitiveTypes.validate(pdef?.typeName,  dataList[name]?.value )
+                PrimitiveTypes.validate(pdef?.typeName,  dataList[name]?.value?.toString() )
             ) : (
                 isReference(dataList[ name ].value ) &&
                         canAssign(pdef.name, getReferenceType(dataList[ name ]?.value)?.name)
@@ -212,10 +229,16 @@ class TypeSystem {
     }
 
     ItemType getType(String  typeId) {
-        dbAccess.getType(typeId)
+        addInherited(
+            dbAccess.getType(typeId)
+        )
     }
 
     ItemType getTypeByName(String name) {
-        dbAccess.getTypeByName(name)
+        ItemType type = cache[name]
+        type ?: addInherited(
+            dbAccess.getTypeByName(name)
+        )
     }
+
 }
