@@ -16,7 +16,12 @@ class TypeSystem {
     def baseItemType = new ItemType(
             name: BASE_TYPE_NAME,
             propertyDefs: [
-                createDateTime: [name : "createDateTime", collectionType: '', typeName: 'dateTime', required: true] as PropertyDef
+                createDateTime: [
+                        name : "createDateTime",
+                        collectionType: '',
+                        typeName: 'dateTime',
+                        required: true,
+                        readOnly: true] as PropertyDef
                 ],
             hierarchy: [],
             categories: []

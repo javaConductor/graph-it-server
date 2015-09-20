@@ -306,7 +306,13 @@ class RestService {
                 List<Category> categories = json.categories.collect{ category ->
                     new Category(id: category.id, name: category.name);
                 }
-                new GraphItem(position: p, title: json.title, categories: categories);
+                new GraphItem(id: json.id,
+                        position: p,
+                        title: json.title,
+                        typeName: json.typeName,
+                        notes: json.notes,
+                        categories: categories,
+                        data: json.data);
             }
             conversion(ItemRelationship) { istream ->
                 def json = new JsonSlurper().parse(istream);

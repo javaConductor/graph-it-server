@@ -12,7 +12,9 @@ class PropertyDef {
     @Id
     String id
     String name
+    String displayName
     boolean required
+    boolean readOnly
     /**
      *  if this property refers to an item then assigning this property implies
      *  this relationship between 'this'  item and the reference

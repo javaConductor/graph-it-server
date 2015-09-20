@@ -137,7 +137,17 @@ class DbAccess {
      * @return
      */
     GraphItem update(GraphItem graphItem){
-        mongo.save(graphItem)
+        ///TODO - update is creating dups
+        mongo.updateFirst(
+                new Query().addCriteria(Criteria.where('_id').is(graphItem.id)),
+                new Update().
+                        set('title', graphItem.title).
+                        set("notes", graphItem.notes).
+                        set("categories", graphItem.categories).
+                        set("data", graphItem.data), GraphItem)
+
+        //new Update().
+        //mongo.save(graphItem)
         graphItem
     }
 
