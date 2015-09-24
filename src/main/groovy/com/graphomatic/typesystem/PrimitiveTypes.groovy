@@ -18,6 +18,17 @@ class PrimitiveTypes {
     static final public String  EmailAddress = "emailAddress"
     static final public String  Map = "map"
     static final public String  List = "list"
+    //TODO support these also !!!
+    static final public String  Currency = "currency"
+    static final public String  GeoLocation = "geoLocation"
+    /* {
+  "location": {
+    "lat": 51.0,
+    "lng": -0.1
+  },
+  "accuracy": 1200.4
+}*/
+
     static final public List<String>  All = [Number,Text,Boolean,URL,Link,DateTime,EmailAddress]
 
     private static final String EMAIL_PATTERN = "[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})"

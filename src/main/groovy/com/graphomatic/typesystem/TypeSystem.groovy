@@ -6,32 +6,39 @@ import com.graphomatic.service.DbAccess
 import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.typesystem.domain.PropertyDef
 import com.graphomatic.typesystem.validation.ValidationException
+import groovy.util.logging.Log
+import groovy.util.logging.Log4j
 
 /**
  * Created by lcollins on 8/20/2015.
  */
+@Log4j
 class TypeSystem {
     static final String BASE_TYPE_NAME='$thing'
     def baseCategory = new Category(name: "ALL")
-    def baseItemType = new ItemType(
-            name: BASE_TYPE_NAME,
-            propertyDefs: [
-                createDateTime: [
-                        name : "createDateTime",
-                        collectionType: '',
-                        typeName: 'dateTime',
-                        required: true,
-                        readOnly: true] as PropertyDef
-                ],
-            hierarchy: [],
-            categories: []
-            )
-
+    def baseItemType
     DbAccess dbAccess
     LRUTypeCache cache
 
     def TypeSystem(DbAccess dbAccess) {
+        if (!dbAccess)
+            throw new IllegalArgumentException("TypeSystem - no dbAccess!")
         this.dbAccess = dbAccess
+        log.debug("TypeSystem(dbAccess=$dbAccess)".toString());
+
+        baseItemType = new ItemType(
+                name: BASE_TYPE_NAME,
+                propertyDefs: [
+                        createDateTime: [
+                                name : "createDateTime",
+                                collectionType: '',
+                                typeName: 'dateTime',
+                                required: true,
+                                readOnly: true] as PropertyDef
+                ],
+                hierarchy: [],
+                categories: [ensureBaseCategory("ALL")]
+        )
         cache = new LRUTypeCache()
         // ensure the existence ofthe base type in db
         baseItemType = ensureBaseType(BASE_TYPE_NAME )

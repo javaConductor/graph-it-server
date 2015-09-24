@@ -13,10 +13,12 @@ import com.graphomatic.typesystem.PrimitiveTypes
 import com.graphomatic.typesystem.domain.PropertyDef
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
+import groovy.util.logging.Log4j
 
 /**
  * Created by lcollins on 8/11/2015.
  */
+@Log4j
 class DataLoader {
     GraphItService graphItService
     TypeSystem typeSystem
@@ -193,7 +195,7 @@ class DataLoader {
 
         typeName = jsonPropertyDef.type
         if (!typeSystem.isKnownType(typeName)) {
-            throw new ValidationException("No such type: $typeName for data element: $propertyName")
+            log.warn("No such type: $typeName for data element: $propertyName")
         }
             // convert string to proper data type
 //            if (PrimitiveTypes.isPrimitiveType(typeName)) {

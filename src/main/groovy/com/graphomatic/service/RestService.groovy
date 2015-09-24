@@ -234,7 +234,7 @@ class RestService {
         /// Add item note
         put('/:id/notes') {String notes, graphItemId ->
             GraphItem gOld = graphItService.getGraphItem(graphItemId);
-            GraphItem g = graphItService.updateGraphItemNotes(graphItemId, notes)
+            GraphItem g = graphItService.updateGraphItemNotes(graphItemId, notes ?: '')
             log.debug("graphItem [$graphItemId] set notes: from [${gOld.notes}] to [${g.notes}].");
             writeJson prepareGraphItem(g) + [links: links(g)]
         }
@@ -247,6 +247,7 @@ class RestService {
             Map jsonData = new groovy.json.JsonSlurper().parseText(jsonDataString)
             String typeName
             def typeId = formData.getValue("type")
+            def notes = formData.getValue("notes") ?: ""
             def type = typeSystem.getType(typeId)
             typeName = type?.name ?: TypeSystem.BASE_TYPE_NAME
             Position pos =  (
@@ -261,6 +262,7 @@ class RestService {
                     typeName: typeName,
                     images: [],
                     data: jsonData,
+                    notes: notes,
                     position : pos,
                     categories: category ? [category] : []))
             if(formData.files) {
@@ -310,9 +312,9 @@ class RestService {
                         position: p,
                         title: json.title,
                         typeName: json.typeName,
-                        notes: json.notes,
-                        categories: categories,
-                        data: json.data);
+                        notes: json.notes ?: "",
+                        categories: categories ?: [],
+                        data: json.data ?: [:]);
             }
             conversion(ItemRelationship) { istream ->
                 def json = new JsonSlurper().parse(istream);
