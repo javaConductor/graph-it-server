@@ -22,54 +22,54 @@
   "ItemTypes": [{
       "name":"Track",
       "category": ["Audio"],
-      "properties":[
-        {"name": "title", "type": "text", "required": true },
-        {"name": "artist", "relationshipType":"performed", "itemType": ["Person","Artist"]},
-        {"name": "producer", "relationshipType":"produced", "itemType": ["Person","Artist","Producer"]},
-        {"name": "audioClip", "relationshipType":"audioClip", "itemType": "Audio" },
-        {"name": "audioFile", "relationshipType":"audioFile", "itemType": "Audio" },
-        {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
-      ]
+      "properties":{
+        "title": {"name": "title", "type": "text", "required": true },
+        "artist":{"name": "artist", "relationshipType":"performed", "itemType": ["Person","Artist"]},
+       "producer": {"name": "producer", "relationshipType":"produced", "itemType": ["Person","Artist","Producer"]},
+        "audioClip":{"name": "audioClip", "relationshipType":"audioClip", "itemType": "Audio" },
+        "audioFile":{"name": "audioFile", "relationshipType":"audioFile", "itemType": "Audio" },
+       "credits": {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
+    }
+
     },
     {
       "name":"Artist",
       "category": "Audio",
-      "properties":[
-        {"name": "name", "type": "text"},
-        {"name": "photos", "relationshipType":["photoOf"], "itemType": ["Image"]},
-        {"name": "groupMembers", "relationshipType":["memberOf"], "itemType": ["Person","GroupMemeber"]}
-      ]
+      "properties":{
+       "name": {"name": "name", "type": "text"},
+        "photos":{"name": "photos", "relationshipType":["photoOf"], "itemType": ["Image"]},
+        "groupMembers":{"name": "groupMembers", "relationshipType":["memberOf"], "itemType": ["Person","GroupMemeber"]}
+        }
     },
     {
       "name" : "GroupMember" ,
       "parent":"Person",
-      "properties":[
-        {"name": "contribution", "type": "text"}
-      ]
+      "properties": {
+        "contribution": {   "name": "contribution",  "type": "text" }
+      }
     }
 
     {
       "name":"TrackCredits",
       "category": "Audio",
-      "requiredData":[
-        {"name": "trackId", "type": "id"},
-        {"name": "contributors",
-          "type":"map",
+      "properties":{
+       "trackId": {"name": "trackId", "type": "id"},
+        "contributors":{"name": "contributors", "type":"map",
           "map":{
             "key":{
               "type": "text"
             },
             "value":{
               "relationshipType":"audioClip", // defaults to name
-              itemType: "Audio"
+              "itemType": "Audio"
             }
           },
         },
-        {"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
-        {"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
-        {"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
-        {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
-      ]
+        "producer":{"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
+        "audioClip":{"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
+        "audioFile":{"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
+        "credits":{"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
+      }
     },
 
     Recording{title, media, format}
@@ -84,21 +84,19 @@
       "name":"AudioRecording",
       "parent": "Audio",
       "category": "Audio",
-      "requiredData":[
-        {"name": "title", "type": "text"},
-        {"name": "label", "relationshipType":"onLabel", itemType: ["RecordLabel"]},
-        {"name": "artist", "relationshipType":"performed", itemType: ["Person","Artist"]},
-        {"name": "executiveProducer", itemType: ["Person","Artist"]},
-        {"name": "credits", "relationshipType":"credits", itemType: ["TrackCredits"]},
-        {"name": images", "relationshipType":"performed", itemType: ["Person","Artist"]},
-        ],
-          "optionalData":[
-            {"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
-            {"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
-            {"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
-            {"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
-          ]
-        },
+      "properties":{
+        "title":{"name": "title", "type": "text"},
+        "label":{"name": "label", "relationshipType":"onLabel", itemType: ["RecordLabel"]},
+        "artist":{"name": "artist", "relationshipType":"performed", itemType: ["Person","Artist"]},
+        "executiveProducer":{"name": "executiveProducer", itemType: ["Person","Artist"]},
+        "credits":{"name": "credits", "relationshipType":"credits", itemType: ["TrackCredits"]},
+        "images":{"name": "images", "relationshipType":"performed", itemType: ["Person","Artist"]},
+        "producer":{"name": "producer", "relationshipType":"produced", itemType: ["Person","Artist","Producer"]},
+        "audioClip":{"name": "audioClip", "relationshipType":"audioClip", itemType: "Audio" },
+        "audioFile":{"name": "audioFile", "relationshipType":"audioFile", itemType: "Audio" },
+        "credits":{"name": "credits", "relationshipType": "credits", "itemType":"TrackCredits"}
+        }
+    },
         VinylRecording{parent:Recording, media:Vinyl}
         DigitalRecording{parent:Recording, media:digital }
         CDRecording{parent:DigitalRecording, format:CD}

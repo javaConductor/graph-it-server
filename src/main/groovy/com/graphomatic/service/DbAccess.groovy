@@ -141,13 +141,10 @@ class DbAccess {
         mongo.updateFirst(
                 new Query().addCriteria(Criteria.where('_id').is(graphItem.id)),
                 new Update().
-                        set('title', graphItem.title).
-                        set("notes", graphItem.notes).
-                        set("categories", graphItem.categories).
-                        set("data", graphItem.data), GraphItem)
-
-        //new Update().
-        //mongo.save(graphItem)
+                        set('title', graphItem.title ?: "").
+                        set("notes", graphItem.notes ?: "").
+                        set("categories", graphItem.categories ?: []).
+                        set("data", graphItem.data ?: [:]), GraphItem)
         graphItem
     }
 
@@ -268,13 +265,6 @@ class DbAccess {
                 size: resource.contentLength())
     }
 
-//
-//    GraphItem addItemNote(String  id, String note) {
-//        mongo.findAndModify(
-//                new Query(Criteria.where('id').is(id)),
-//                new Update().push("notes", note ),
-//                GraphItem)
-//    }
 
     GraphItem updateGraphItemNotes(String graphItemId, String notes) {
         GraphItem g = mongo.findAndModify(

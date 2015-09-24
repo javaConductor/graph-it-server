@@ -219,6 +219,38 @@ class GraphItService {
                             parent: "Computer",
                             properties: [:]
                     ],
+                    "Software": [
+                            parent: '$thing',
+                            properties: [
+                                    "Name":  [type: 'text', required: true],
+                                    "Primary Language":  [type: 'text', required: false],
+                                    "Memory Requirements (mb)":  [type: 'number', required: false],
+                                    "IP Address":  [type: 'text', required: false],
+                                    "Description":  [type: 'text', required: false]
+                            ]
+                    ],
+                    "Application Environment" : [
+                            parent: '$thing',
+                            properties: [
+                                    "Name":  [type: 'text', required: true],
+                                    "Nodes": [type: 'Server Computer', required: true, collectionType: "list"],
+                            ],
+                    "Software Application" : [
+                        parent: "Software"
+
+                        ],
+                    "Software Module" : [
+                            parent: "Software"
+                        ],
+                    "Function" : [
+                            categories: ["Software Development"],
+                            properties: [
+                                    "Name":  [type: 'text', required: true],
+                                    "Description":[type: 'text', required: false]
+                            ]
+                        ]
+                    ],
+
                     Verse : [
                             properties: [
                                     verseId: [name: "verseId", type: 'text', required: true],
