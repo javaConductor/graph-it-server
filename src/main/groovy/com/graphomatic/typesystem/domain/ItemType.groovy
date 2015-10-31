@@ -48,4 +48,5 @@ class ItemType {
     transient Set<String> hierarchy = []
     Map<String, Object> defaults = [:]
     String parentName
+	Map<String, String> templates;
 }

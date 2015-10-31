@@ -47,8 +47,8 @@ def setupLoggers() {
     logger("org.apache.http", ERROR, ["CONSOLE"]) // Apache HTTP
     logger("groovyx.net.http", ERROR, ["CONSOLE"]) // Groovy HTTP
     logger("org.springframework", WARN, ["CONSOLE"]) // Spring
-    logger("io.github.javaconductor.gserv", TRACE, ["CONSOLE", "FILE"]) // gServ
+    logger("io.github.javaconductor.gserv", DEBUG, ["FILE"]) // gServ
     logger("com.graphomatic", DEBUG, ["CONSOLE", "FILE"]) // App
     //root(DEBUG, ["CONSOLE", "FILE"])
-    root(DEBUG, ["CONSOLE", "FILE"])
+    root(DEBUG, ["FILE"])
 }

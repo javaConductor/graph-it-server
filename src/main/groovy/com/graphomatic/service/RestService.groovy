@@ -141,7 +141,7 @@ class RestService {
             /// create a new image for this graph-item
             post(":graphItemId") {FormData formData, String graphItemId ->
 
-                if(!formData.files || formData.files.empty) {
+                if (!formData.hasFiles()) {
                     error 400, "No file uploaded!"
                 }else {
                     ByteArrayInputStream is = new ByteArrayInputStream(formData.files[0].content)
@@ -241,17 +241,17 @@ class RestService {
 
         /// Create from form
         post('/form') { FormData formData ->
-            String title = formData.getValue("title")
-            String cat = formData.getValue("category")
-            String jsonDataString = formData.getValue("data")
+            String title = formData.fieldValue["title"]
+            String cat = formData.fieldValue["category"]
+            String jsonDataString = formData.fieldValue["data"]
             Map jsonData = new groovy.json.JsonSlurper().parseText(jsonDataString)
             String typeName
-            def typeId = formData.getValue("type")
-            def notes = formData.getValue("notes") ?: ""
+            def typeId = formData.fieldValue["type"]
+            def notes = formData.fieldValue["notes"] ?: ""
             def type = typeSystem.getType(typeId)
             typeName = type?.name ?: TypeSystem.BASE_TYPE_NAME
             Position pos =  (
-                        formData.getValue("position.x") && formData.getValue("position.y")
+                    formData.fieldValue["position.x"] && formData.fieldValue["position.y"]
                         ) ?  new Position(
                                 x: formData.getValue("position.x") as long,
                                 y: formData.getValue("position.y") as long)
