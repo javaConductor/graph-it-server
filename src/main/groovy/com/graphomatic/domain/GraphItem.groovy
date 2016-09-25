@@ -1,5 +1,6 @@
 package com.graphomatic.domain
 
+import com.graphomatic.security.User
 import com.graphomatic.typesystem.domain.ItemType
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
@@ -21,4 +22,13 @@ class GraphItem {
     Map<String, Object> data;
     String typeName
     transient ItemType type
+    String ownerName
+    Map accessMap = [
+            owner:"W",
+            group:"W",
+            public:"R",
+    ]
+    String access //: O/G/P (owner,group,public) x RW - upto 3 chars
+    String visibility //: O/G/P (owner,group,public) -
+
 }

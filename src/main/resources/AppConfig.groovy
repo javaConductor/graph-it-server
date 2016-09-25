@@ -1,14 +1,9 @@
-import com.gmongo.GMongo
-import com.gmongo.GMongoClient
-import com.graphomatic.Utils
+import com.graphomatic.security.UserResource
+import com.graphomatic.security.SecurityService
 import com.graphomatic.service.DbAccess
 import com.graphomatic.service.GraphItService
 import com.graphomatic.service.RestService
 import com.graphomatic.typesystem.TypeSystem
-import com.mongodb.Mongo
-import com.mongodb.MongoClient
-import com.mongodb.ServerAddress
-import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.gridfs.GridFsTemplate
 
@@ -66,25 +61,43 @@ beans {
         ]
     }
 
-    typeSystem(TypeSystem){beanDefinition ->
-            beanDefinition.constructorArgs = [
-                    ref('dbAccess')
-            ]
-    }
+  typeSystem(TypeSystem){beanDefinition ->
+    beanDefinition.constructorArgs = [
+      ref('dbAccess')
+    ]
+  }
 
-    graphItService(GraphItService){beanDefinition ->
+  graphItService(GraphItService){beanDefinition ->
         beanDefinition.constructorArgs = [
             ref('dbAccess'),
             ref('typeSystem')
         ]
     }
 
-    ////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
+  //// Security Components
+  ////////////////////////////////////////////////////////////////
+
+  securityService(SecurityService){beanDefinition ->
+    beanDefinition.constructorArgs = [
+      ref('dbAccess')
+    ]
+  }
+
+  securityResource(UserResource){ beanDefinition ->
+    beanDefinition.constructorArgs = [
+      ref('securityService')
+    ]
+  }
+
+  ////////////////////////////////////////////////////////////////
     //// Web Components
     ////////////////////////////////////////////////////////////////
     restService(RestService) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('graphItService'), ref('typeSystem')
+            ref('graphItService'),
+            ref('typeSystem'),
+            ref('securityResource')
         ]
     }
 }

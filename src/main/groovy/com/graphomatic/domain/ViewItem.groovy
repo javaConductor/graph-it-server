@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document
  * Created by lcollins on 10/25/2015.
  */
 @Document
-class SceneItem {
+class ViewItem {
     @Id
     String id;
     String itemId;

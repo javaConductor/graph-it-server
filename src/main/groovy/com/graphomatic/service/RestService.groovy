@@ -7,14 +7,14 @@ import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
+import com.graphomatic.oauth.OAuthResource
+import com.graphomatic.security.UserResource
 import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.ItemType
-import groovy.json.JsonParser
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import io.github.javaconductor.gserv.converters.FormData
 import net.sf.json.groovy.JsonSlurper
-import org.apache.http.protocol.HTTP
 
 /**
  * Created by lcollins on 6/28/2015.
@@ -24,15 +24,20 @@ class RestService {
     def stopFn
     GraphItService graphItService
     TypeSystem typeSystem
+	UserResource securityResource
 
-    def RestService(GraphItService graphItService, TypeSystem typeSystem) {
+    def RestService(GraphItService graphItService,
+                    TypeSystem typeSystem,
+                    UserResource securityResource) {
         this.graphItService = graphItService
         this.typeSystem = typeSystem
+		this.securityResource = securityResource
     }
 
     def createService() {
 
         GServ gServ = new GServ();
+        def oauthRes = new OAuthResource()
         def graphCategoryRes = gServ.resource("category") {
             get("") {
                 List<Category> categories = graphItService.getCategories();
@@ -54,6 +59,7 @@ class RestService {
                 ]
             }
         }
+
         def graphRelationshipRes = gServ.resource("relationship") {
             get("") {
                 List<Relationship> relationships = graphItService.getRelationshipDefs();
@@ -333,6 +339,7 @@ class RestService {
             resource graphCategoryRes
             resource graphItemImageRes
             resource typeSystemRes
+            resource securityResource
         }
     }
 
