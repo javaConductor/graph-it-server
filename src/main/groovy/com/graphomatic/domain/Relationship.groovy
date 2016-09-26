@@ -1,11 +1,13 @@
 package com.graphomatic.domain
 
+import groovy.transform.ToString
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 /**
  * Created by lcollins on 7/5/2015.
  */
+@ToString
 @Document
 class Relationship {
     @Id

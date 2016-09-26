@@ -2,11 +2,10 @@ package com.graphomatic.typesystem
 
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.Property
-import com.graphomatic.service.DbAccess
+import com.graphomatic.persistence.DbAccess
 import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.typesystem.domain.PropertyDef
 import com.graphomatic.typesystem.validation.ValidationException
-import groovy.util.logging.Log
 import groovy.util.logging.Log4j
 
 /**
@@ -209,6 +208,7 @@ class TypeSystem {
     boolean dataValidForPrimitiveTypes(String typeName, Object value) {
         PrimitiveTypes.validate(typeName, value)
     }
+
 
     ItemType getReferenceType(String itemReference) {
         //$ref:[bcbdbcbd5-cnndn443-cdnnddncmdmd]

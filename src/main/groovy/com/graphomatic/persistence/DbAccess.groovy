@@ -1,4 +1,4 @@
-package com.graphomatic.service
+package com.graphomatic.persistence
 
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
@@ -6,8 +6,6 @@ import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.View
-import com.graphomatic.security.User
-import com.graphomatic.security.UserLogin
 import com.graphomatic.typesystem.domain.Group
 import com.graphomatic.typesystem.domain.ItemType
 import com.graphomatic.domain.Position
@@ -27,7 +25,7 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate;
  */
 @Repository
 @Slf4j
-class DbAccess {
+class DbAccess implements UserDbAccess {
 
     final static String GRAPH_ITEM_IMAGE_FOLDER = "/graph-item-images"
     MongoTemplate mongo;
@@ -51,7 +49,7 @@ class DbAccess {
      */
     List<GraphItem> getAllGraphItems(){
         //TODO fix this - findAll should work!
-        mongo.find(Query.query(Criteria.where("_id").exists(true)), GraphItem.class )
+        mongo.find(Query.query(Criteria.where("id").exists(true)), GraphItem.class )
     }
 
     /**
@@ -333,12 +331,6 @@ class DbAccess {
 
     View getView(String id) {
         mongo.findById(id, View)
-    }
-
-    UserLogin saveUserLogin(User user, Date date, String ipAddr) {
-        UserLogin ul = new UserLogin(ipAddr: ipAddr, user: user, when: date );
-        mongo.insert( ul )
-        ul
     }
 
 }

@@ -1,13 +1,17 @@
 package com.graphomatic.domain
 
+import com.graphomatic.security.AccessType
+import com.graphomatic.security.PermissionType
 import com.graphomatic.security.User
 import com.graphomatic.typesystem.domain.ItemType
+import groovy.transform.ToString
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 /**
  * Created by lcollins on 6/28/2015.
  */
+@ToString
 @Document
 class GraphItem {
     @Id
@@ -23,12 +27,13 @@ class GraphItem {
     String typeName
     transient ItemType type
     String ownerName
-    Map accessMap = [
-            owner:"W",
-            group:"W",
-            public:"R",
+    String groupName
+    Map<String,String> accessMap = [
+            (PermissionType.Owner.name()):"W",
+            (PermissionType.Group.name()):"W",
+            (PermissionType.Public.name()):"R",
     ]
-    String access //: O/G/P (owner,group,public) x RW - upto 3 chars
+    AccessType access //: O/G/P (owner,group,public) x RW - upto 3 chars
     String visibility //: O/G/P (owner,group,public) -
 
 }

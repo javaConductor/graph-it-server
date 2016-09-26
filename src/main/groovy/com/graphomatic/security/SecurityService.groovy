@@ -2,8 +2,7 @@ package com.graphomatic.security
 
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.View
-import com.graphomatic.service.DbAccess
-import com.graphomatic.typesystem.PrimitiveTypes
+import com.graphomatic.persistence.DbAccess
 
 /**
  * Created by lcollins on 11/9/2015.
@@ -12,6 +11,14 @@ class SecurityService {
 	DbAccess dbAccess
 	def SecurityService( DbAccess dbAccess ){
 		this.dbAccess = dbAccess
+	}
+
+	User createUser(String username, String userGroupName, String email){
+		createUser(new User(username: username, userGroupName: userGroupName, emailAddress: email))
+	}
+
+	User createUser(User user){
+		dbAccess.createUser( user )
 	}
 
 	AuthResult authenticate( String username, String password ){
@@ -23,12 +30,12 @@ class SecurityService {
 	AuthResult testAuthenticate( String username, String password ){
 
 			if  ( username == "patrick" && password == "adams")
-				return new AuthResult(mustChangePasword: false, authToken: "tok.${new Date().time}");
+				return new AuthResult(mustChangePassword: false, authToken: "tok.${new Date().time}");
 
 			if  ( username == "change" && password == "password")
-				return new AuthResult(mustChangePasword: true, authToken: "tok.${new Date().time}");
+				return new AuthResult(mustChangePassword: true, authToken: "tok.${new Date().time}");
 
-		return new AuthResult(mustChangePasword: false);
+		return new AuthResult(mustChangePassword: false);
 
 	}
 
@@ -43,10 +50,12 @@ class SecurityService {
 
 		// check if user is owner
 		if ( item.ownerName == user.username ) {
-			return accessMap[PermissionType.Owner]
+			return accessMap[PermissionType.Owner.name()]
 		}
 
 		// check if user in group with access
+		dbAccess.getGroupsForUser(user).
+		item.groupName
 
 		// check if item has public access
 
@@ -56,4 +65,12 @@ class SecurityService {
 
 	}
 
+	UserGroup getPrimaryUserGroup(User user) {
+		List groups = getGroupsForUser(user)
+		groups && groups[0] ? groups[0] : null;
+	}
+
+	List<UserGroup> getGroupsForUser(User u){
+		dbAccess.getGroupsForUser(u)
+	}
 }

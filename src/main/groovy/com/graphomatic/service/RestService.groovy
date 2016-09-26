@@ -8,13 +8,18 @@ import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.graphomatic.oauth.OAuthResource
+import com.graphomatic.security.User
 import com.graphomatic.security.UserResource
 import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.ItemType
 import groovy.util.logging.Slf4j
 import io.github.javaconductor.gserv.GServ
 import io.github.javaconductor.gserv.converters.FormData
+import io.github.javaconductor.gserv.requesthandler.RequestContext
 import net.sf.json.groovy.JsonSlurper
+import org.apache.http.auth.BasicUserPrincipal
+
+import java.security.Principal
 
 /**
  * Created by lcollins on 6/28/2015.
@@ -206,6 +211,7 @@ class RestService {
 
     def graphItemRes = gServ.resource("graph-item") {
 
+
         /// get all graph-items
         get("") { ->
             writeJson graphItService.allGraphItems.collect { graphItem ->
@@ -281,9 +287,10 @@ class RestService {
         }
 
         /// Create
-        post('') { GraphItem graphItem ->
+            post('') { GraphItem graphItem ->
             GraphItem g = graphItService.createGraphItem(graphItem)
             writeJson prepareGraphItem(g) + [_links: links(g)]
+
         }
 
         links { GraphItem graphItem ->
@@ -308,6 +315,15 @@ class RestService {
             plugin("cors",[:])
         }.http {
             cors( "/", allowAll(3600) )
+
+            basicAuthentication(['DELETE', "POST", "PUT"], '/*', "graph-it-users") { user, pswd, RequestContext requestContext ->
+                def ok = (user == "secret" && pswd == "thing")
+                println "u=$user p=$pswd : ${ok ? "OK" : "FAILED"}";
+                if(ok){
+                    requestContext.setPrincipal(new BasicUserPrincipal(user));
+                }
+                ok
+            }
             conversion(GraphItem) { istream ->
                 def json = new JsonSlurper().parse(istream);
                 Position p = new Position(x: json.position.x, y: json.position.y);

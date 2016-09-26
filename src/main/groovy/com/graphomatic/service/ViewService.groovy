@@ -1,8 +1,8 @@
 package com.graphomatic.service
 
 import com.graphomatic.domain.View
+import com.graphomatic.persistence.DbAccess
 import groovy.util.logging.Slf4j
-import org.springframework.stereotype.Service
 
 /**
  * Created by lcollins on 11/7/2015.

@@ -5,10 +5,11 @@ package com.graphomatic.security
  */
 class AuthResult {
 
-	boolean  mustChangePasword
+	boolean mustChangePassword
 	String authToken
 	boolean  authenticated(){
 		!!authToken
 	}
+	String message
 
 }

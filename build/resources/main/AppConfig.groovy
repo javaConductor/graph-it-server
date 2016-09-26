@@ -1,6 +1,6 @@
 import com.graphomatic.security.UserResource
 import com.graphomatic.security.SecurityService
-import com.graphomatic.service.DbAccess
+import com.graphomatic.persistence.DbAccess
 import com.graphomatic.service.GraphItService
 import com.graphomatic.service.RestService
 import com.graphomatic.typesystem.TypeSystem

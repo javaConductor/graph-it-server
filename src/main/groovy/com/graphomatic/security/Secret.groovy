@@ -5,14 +5,13 @@ import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
 /**
- * Created by lcollins on 11/5/2015.
+ * Created by lee on 9/25/16.
  */
 @Document
-@CompoundIndex(name = "userGroupNameIdx", def = "{'name': 1 }", unique= true, dropDups = true)
-
-class UserGroup {
-	String name
-	@Id
-	String id
-	Set<User> users
+@CompoundIndex(name = "usernameIdx", def = "{'username': 1 }", unique= true, dropDups = true)
+class Secret {
+    @Id
+    String id
+    String username
+    String passwordHash
 }

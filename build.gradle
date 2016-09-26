@@ -20,7 +20,7 @@ dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.4.1'
     compile 'com.gmongo:gmongo:1.5'
     compile 'org.springframework:spring-context:4.1.4.RELEASE'
-    compile 'org.springframework.data:spring-data-mongodb:1.2.0.RELEASE'
+    compile 'org.springframework.data:spring-data-mongodb:1.9.1.RELEASE'
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'

@@ -9,9 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document
  * Created by lcollins on 11/5/2015.
  */
 @Document
-//@CompoundIndexes({
-//	@CompoundIndex(name = "usernameIdx", def = "{'username': 1 }", unique= true, dropDups = true)
-//})
+@CompoundIndex(name = "usernameIdx", def = "{'username': 1 }", unique= true, dropDups = true)
 class User {
 	@Id
 	String id
@@ -20,7 +18,6 @@ class User {
 	String lastName
 	String emailAddress
 	String phoneNumber
-//TODO what to do about circular-references ? 	Set<UserGroup> groups
 
 	@Override
 	boolean equals(Object obj) {

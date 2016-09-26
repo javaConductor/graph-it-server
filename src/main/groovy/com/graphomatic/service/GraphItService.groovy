@@ -4,15 +4,13 @@ import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemRelationship
-import com.graphomatic.domain.Property
+import com.graphomatic.persistence.DbAccess
 import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.Group
 import com.graphomatic.typesystem.domain.ItemType
-import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.graphomatic.util.DataLoader
 import groovy.json.JsonBuilder
-import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
 import org.springframework.stereotype.Service
 
