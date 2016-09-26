@@ -2,6 +2,7 @@ package com.graphomatic.service
 
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.GraphItemStatus
 import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.persistence.DbAccess
@@ -68,7 +69,12 @@ class GraphItService {
 
     boolean removeGraphItem(String id) {
         //TODO only mark it as deleted
-        return dbAccess.removeGraphItem(id);
+        GraphItem item = getGraphItem(id);
+        if( item ){
+            item.status = GraphItemStatus.Deleted.name();
+            return dbAccess.update( item );
+        }
+        throw new IllegalArgumentException("No such item: id="+id)
     }
 
     List<GraphItem> getAllGraphItems() {

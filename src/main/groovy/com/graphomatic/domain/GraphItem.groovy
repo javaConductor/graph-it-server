@@ -35,5 +35,9 @@ class GraphItem {
     ]
     AccessType access //: O/G/P (owner,group,public) x RW - upto 3 chars
     String visibility //: O/G/P (owner,group,public) -
+    String status = GraphItemStatus.New.name()
+}
 
+enum GraphItemStatus {
+    New, Active, Deleted
 }
