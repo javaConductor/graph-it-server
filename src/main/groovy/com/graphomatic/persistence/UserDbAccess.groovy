@@ -56,6 +56,11 @@ trait UserDbAccess {
         }
         groups
     }
+    boolean userInGroup(User user,String groupName){
+        getGroupsForUser(user).any{ group ->
+         groupName == group.name
+        }
+    }
 
     User createUser(User user) {
         mongo.save(user)

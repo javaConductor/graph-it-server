@@ -1,6 +1,7 @@
 import com.graphomatic.security.UserResource
 import com.graphomatic.security.SecurityService
 import com.graphomatic.persistence.DbAccess
+import com.graphomatic.service.EventService
 import com.graphomatic.service.GraphItService
 import com.graphomatic.service.RestService
 import com.graphomatic.typesystem.TypeSystem
@@ -17,7 +18,7 @@ properties.load(new FileInputStream(propFile))
 //Map mongoOpts = Utils.subMap(properties, 'mongo.options')
 
 beans {
-    xmlns([ctx: 'http://www.springframework.org/schema/context',
+    xmlns([ctx  : 'http://www.springframework.org/schema/context',
            mongo: 'http://www.springframework.org/schema/data/mongo'])
     ctx.'component-scan'('base-package': "com.graphomatic")
     mongo.repositories('base-package': "com.graphomatic.domain")
@@ -26,78 +27,87 @@ beans {
     ////////////////////////////////////////////////////////////////
 
     mongo.mongo(
-            'host':properties["mongo.host"],
-            'port':properties["mongo.port"] as int,
-            'id':"mongoDb");
+            'host': properties["mongo.host"],
+            'port': properties["mongo.port"] as int,
+            'id': "mongoDb");
 
 
     mongo.'db-factory'(
-            'dbname':properties["mongo.databaseName"],
-            'mongo-ref':"mongoDb",
-            'id':"mongoDbFactory");
+            'dbname': properties["mongo.databaseName"],
+            'mongo-ref': "mongoDb",
+            'id': "mongoDbFactory");
 
     mongo.'mapping-converter'(
             'id': "converter",
-            'db-factory-ref': ('mongoDbFactory') );
+            'db-factory-ref': ('mongoDbFactory'));
 
-    mongoTemplate(MongoTemplate){ beanDefinition ->
+    mongoTemplate(MongoTemplate) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('mongoDbFactory'),
-            ref('converter')
+                ref('mongoDbFactory'),
+                ref('converter')
         ]
     }
 
-    gridFsTemplate(GridFsTemplate){ beanDefinition ->
+    gridFsTemplate(GridFsTemplate) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref(mongoDbFactory),
-            ref(converter)
+                ref(mongoDbFactory),
+                ref(converter)
         ]
     }
 
-    dbAccess(DbAccess){beanDefinition ->
+    dbAccess(DbAccess) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref(mongoTemplate),
-            ref('gridFsTemplate')
+                ref(mongoTemplate),
+                ref('gridFsTemplate')
         ]
     }
 
-  typeSystem(TypeSystem){beanDefinition ->
-    beanDefinition.constructorArgs = [
-      ref('dbAccess')
-    ]
-  }
-
-  graphItService(GraphItService){beanDefinition ->
+    typeSystem(TypeSystem) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('dbAccess'),
-            ref('typeSystem')
+                ref('dbAccess')
+        ]
+    }
+    ////////////////////////////////////////////////////////////////
+    //// Security Components
+    ////////////////////////////////////////////////////////////////
+
+    securityService(SecurityService) { beanDefinition ->
+        beanDefinition.constructorArgs = [
+                ref('dbAccess')
         ]
     }
 
-  ////////////////////////////////////////////////////////////////
-  //// Security Components
-  ////////////////////////////////////////////////////////////////
+    securityResource(UserResource) { beanDefinition ->
+        beanDefinition.constructorArgs = [
+                ref('securityService')
+        ]
+    }
 
-  securityService(SecurityService){beanDefinition ->
-    beanDefinition.constructorArgs = [
-      ref('dbAccess')
-    ]
-  }
+    ////////////////////////////////////////////////////////////////
+    //// Services
+    ////////////////////////////////////////////////////////////////
+    eventService(EventService) {beanDefinition ->
+        beanDefinition.constructorArgs = [
+                ref('mongoTemplate')
+        ]
+    }
+    graphItService(GraphItService) { beanDefinition ->
+        beanDefinition.constructorArgs = [
+                ref('dbAccess'),
+                ref('typeSystem'),
+                ref('securityService'),
+                ref('eventService')
+        ]
+    }
 
-  securityResource(UserResource){ beanDefinition ->
-    beanDefinition.constructorArgs = [
-      ref('securityService')
-    ]
-  }
-
-  ////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////
     //// Web Components
     ////////////////////////////////////////////////////////////////
     restService(RestService) { beanDefinition ->
         beanDefinition.constructorArgs = [
-            ref('graphItService'),
-            ref('typeSystem'),
-            ref('securityResource')
+                ref('graphItService'),
+                ref('typeSystem'),
+                ref('securityResource')
         ]
     }
 }

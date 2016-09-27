@@ -8,6 +8,7 @@ import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.graphomatic.oauth.OAuthResource
+import com.graphomatic.persistence.DbAccess
 import com.graphomatic.security.User
 import com.graphomatic.security.UserResource
 import com.graphomatic.typesystem.TypeSystem
@@ -30,13 +31,14 @@ class RestService {
     GraphItService graphItService
     TypeSystem typeSystem
 	UserResource securityResource
-
-    def RestService(GraphItService graphItService,
+    DbAccess dbAccess
+    def RestService(DbAccess dbAccess, GraphItService graphItService,
                     TypeSystem typeSystem,
                     UserResource securityResource) {
         this.graphItService = graphItService
         this.typeSystem = typeSystem
 		this.securityResource = securityResource
+        this.dbAccess = dbAccess
     }
 
     def createService() {
@@ -238,7 +240,8 @@ class RestService {
 
         /// Update item position
         put('/:id/position/:x:Number/:y:Number') {dummy, graphItemId, x, y ->
-            GraphItem g = graphItService.updateGraphItemPosition(graphItemId, x as int, y as int)
+            User u = getCurrentUser(requestContext)
+            GraphItem g = graphItService.updateGraphItemPosition(u, graphItemId, x as int, y as int)
             log.debug("graphItem moved to: $x,  $y");
             writeJson prepareGraphItem(g) + [links: links(g)]
         }
@@ -253,6 +256,7 @@ class RestService {
 
         /// Create from form
         post('/form') { FormData formData ->
+            User currentUser = getCurrentUser(requestContext)
             String title = formData.fieldValue["title"]
             String cat = formData.fieldValue["category"]
             String jsonDataString = formData.fieldValue["data"]
@@ -317,7 +321,7 @@ class RestService {
             cors( "/", allowAll(3600) )
 
             basicAuthentication(['DELETE', "POST", "PUT"], '/*', "graph-it-users") { user, pswd, RequestContext requestContext ->
-                def ok = (user == "secret" && pswd == "thing")
+                def ok = (user.equals("system") && pswd.equals("system"))
                 println "u=$user p=$pswd : ${ok ? "OK" : "FAILED"}";
                 if(ok){
                     requestContext.setPrincipal(new BasicUserPrincipal(user));
@@ -359,6 +363,9 @@ class RestService {
         }
     }
 
+    User getCurrentUser(RequestContext requestContext){
+        dbAccess.getUserByName(requestContext.principal.name)
+    }
     def start() {
         stopFn = createService().start(8888)
     }

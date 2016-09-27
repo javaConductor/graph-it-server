@@ -73,4 +73,40 @@ class SecurityService {
 	List<UserGroup> getGroupsForUser(User u){
 		dbAccess.getGroupsForUser(u)
 	}
+
+	def viewPermissions = [AccessType.View.name(), AccessType.Delete.name(), AccessType.Update.name()]
+	def updatePermissions = [AccessType.Delete.name(), AccessType.Update.name()]
+	boolean userCanViewItem(User user, GraphItem item){
+
+		//if this is the owner
+		if (user.username == item.ownerName)
+			return true
+		// if visible to all
+		if (viewPermissions.contains(item.accessMap[PermissionType.Public.name()])){
+			return true;
+		}
+		//if user is in a group to which this itm is visible
+		if (viewPermissions.contains(item.accessMap[PermissionType.Group.name()])){
+			if(dbAccess.userInGroup(user,item.groupName))
+				return true;
+		}
+	false
+	}
+
+	boolean userCanUpdateItem(User user, GraphItem item){
+
+		//if this is the owner
+		if (user.username == item.ownerName)
+			return true
+		// if visible to all
+		if (updatePermissions.contains(item.accessMap[PermissionType.Public.name()])){
+			return true;
+		}
+		//if user is in a group to which this itm is visible
+		if (updatePermissions.contains(item.accessMap[PermissionType.Group.name()])){
+			if(dbAccess.userInGroup(user,item.groupName))
+				return true;
+		}
+		false
+	}
 }

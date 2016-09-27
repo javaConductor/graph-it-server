@@ -1,11 +1,14 @@
 package com.graphomatic.service
 
 import com.graphomatic.domain.Category
+import com.graphomatic.domain.Event
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.GraphItemStatus
 import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemRelationship
 import com.graphomatic.persistence.DbAccess
+import com.graphomatic.security.SecurityService
+import com.graphomatic.security.User
 import com.graphomatic.typesystem.TypeSystem
 import com.graphomatic.typesystem.domain.Group
 import com.graphomatic.typesystem.domain.ItemType
@@ -23,12 +26,16 @@ import org.springframework.stereotype.Service
 class GraphItService {
     DbAccess dbAccess
     TypeSystem typeSystem
+    SecurityService securityService
+    EventService eventService
 
-    def GraphItService(DbAccess dbAccess, TypeSystem typeSystem) {
+    def GraphItService(DbAccess dbAccess, TypeSystem typeSystem, SecurityService securityService, EventService eventService) {
         this.dbAccess = dbAccess
         this.typeSystem = typeSystem
+        this.securityService = securityService
+        this.eventService = eventService
 
-        if (!getAllGraphItems().findAll { it }.size()) {
+        if (!getAllGraphItems(  ).findAll { it }.size()) {
             try {
                 createTestData();
             } catch (Exception e) {
@@ -70,15 +77,24 @@ class GraphItService {
     boolean removeGraphItem(String id) {
         //TODO only mark it as deleted
         GraphItem item = getGraphItem(id);
-        if( item ){
+        if (item) {
             item.status = GraphItemStatus.Deleted.name();
-            return dbAccess.update( item );
+            return dbAccess.update(item);
         }
-        throw new IllegalArgumentException("No such item: id="+id)
+        throw new IllegalArgumentException("No such item: id=" + id)
     }
 
     List<GraphItem> getAllGraphItems() {
-        return dbAccess.getAllGraphItems().collect(this.&readTransform)
+        return dbAccess.getAllGraphItems()
+                .collect(this.&readTransform)
+    }
+
+    List<GraphItem> getGraphItemsForUser(int pageSize, int pageNumber, User user) {
+        return dbAccess.getAllGraphItemsForUser(pageSize, pageNumber, user)
+                .collect(this.&readTransform)
+                .findAll { item ->
+            securityService.userCanViewItem(user, item)
+        }
     }
 
     GraphItem setAsMainImage(String graphItemId, String imageId) {
@@ -112,8 +128,13 @@ class GraphItService {
         graphItem
     }
 
-    GraphItem updateGraphItemPosition(String graphItemId, long x, long y) {
-        return readTransform(dbAccess.updatePosition(graphItemId, x, y));
+    GraphItem updateGraphItemPosition(User u, String graphItemId, long x, long y) {
+        def item =  readTransform(dbAccess.updatePosition(u, graphItemId, x, y));
+        def evt = new Event("view.updatePosition",
+                [graphItemId],
+                "${u.username} moved item $graphItemId to $x, $y")
+        eventService.addEvent(evt)
+        item
     }
 
     GraphItem updateGraphItem(GraphItem graphItem) {
@@ -146,18 +167,18 @@ class GraphItService {
 
     Map testData = [
             "Categories"   : [
-                    "People"  : [
+                    "People"     : [
                             children: [
                                     Family : [:],
                                     Peers  : [:],
                                     Friends: [:]
                             ]
                     ],
-                    "Electronics"   : [:            ],
-                    "Music"   : [:],
-                    "Location": [:],
-                    "Business": [:],
-                    "Software": [
+                    "Electronics": [:],
+                    "Music"      : [:],
+                    "Location"   : [:],
+                    "Business"   : [:],
+                    "Software"   : [
                             "children": [
                                     "Software Design"     : [:],
                                     "Software Deployment" : [:],
@@ -173,8 +194,8 @@ class GraphItService {
                             ]
                     ]
             ],
-            "Types" : [
-                    Person: [
+            "Types"        : [
+                    Person                   : [
                             categories: ["People"],
                             properties: [
                                     "First Name": [type: "text", required: true],
@@ -182,80 +203,80 @@ class GraphItService {
                                     "email"     : [type: "emailAddress", required: false]
                             ]
                     ],
-                    "Electronics": [
+                    "Electronics"            : [
                             categories: ["ALL"],
                             properties: [
-                                    "Serial Number":  [type: 'text', required: true],
-                                    "Manufacturer":  [type: 'text', required: false],
-                                    "Vendor":  [type: 'text', required: false]
+                                    "Serial Number": [type: 'text', required: true],
+                                    "Manufacturer" : [type: 'text', required: false],
+                                    "Vendor"       : [type: 'text', required: false]
                             ]
                     ],
-                    "Computer": [
-                            parent: "Electronics",
+                    "Computer"               : [
+                            parent    : "Electronics",
                             properties: [
-                                        "Host Name":  [type: 'text', required: true],
-                                        "Operating System":  [type: 'text', required: false],
-                                        "Memory (mb)":  [type: 'number', required: false],
-                                        "IP Address":  [type: 'text', required: false],
-                                        "Description":  [type: 'text', required: false]
+                                    "Host Name"       : [type: 'text', required: true],
+                                    "Operating System": [type: 'text', required: false],
+                                    "Memory (mb)"     : [type: 'number', required: false],
+                                    "IP Address"      : [type: 'text', required: false],
+                                    "Description"     : [type: 'text', required: false]
                             ]
                     ],
 
-                    "Smart Phone": [
-                            parent: "Electronics",
+                    "Smart Phone"            : [
+                            parent    : "Electronics",
                             properties: [
-                                    "Phone Number":  [type: 'text', required: true],
+                                    "Phone Number": [type: 'text', required: true],
                             ]
                     ],
-                    "Tablet": [
-                            parent: "Electronics",
+                    "Tablet"                 : [
+                            parent    : "Electronics",
                             properties: [:]
                     ],
-                    "ServerComputer" : [
-                            parent: "Computer",
+                    "ServerComputer"         : [
+                            parent    : "Computer",
                             properties: [:]
                     ],
-                    "ClientComputer" : [
-                            parent: "Computer",
+                    "ClientComputer"         : [
+                            parent    : "Computer",
                             properties: [:]
                     ],
-                    "Load Balancer" : [
-                            parent: "Computer",
+                    "Load Balancer"          : [
+                            parent    : "Computer",
                             properties: [:]
                     ],
-                    "Software": [
-                            parent: '$thing',
+                    "Software"               : [
+                            parent    : '$thing',
                             properties: [
-                                    "Name":  [type: 'text', required: true],
-                                    "Primary Language":  [type: 'text', required: false],
-                                    "Memory Requirements (mb)":  [type: 'number', required: false],
-                                    "IP Address":  [type: 'text', required: false],
-                                    "Description":  [type: 'text', required: false]
+                                    "Name"                    : [type: 'text', required: true],
+                                    "Primary Language"        : [type: 'text', required: false],
+                                    "Memory Requirements (mb)": [type: 'number', required: false],
+                                    "IP Address"              : [type: 'text', required: false],
+                                    "Description"             : [type: 'text', required: false]
                             ]
                     ],
-                    "Application Environment" : [
-                            parent: '$thing',
-                            properties: [
-                                    "Name":  [type: 'text', required: true],
+                    "Application Environment": [
+                            parent                : '$thing',
+                            properties            : [
+                                    "Name" : [type: 'text', required: true],
                                     "Nodes": [type: 'Server Computer', required: true, collectionType: "list"],
                             ],
-                    "Software Application" : [
-                        parent: "Software"
+                            "Software Application": [
+                                    parent: "Software"
 
-                        ],
-                    "Software Module" : [
-                            parent: "Software"
-                        ],
-                    "Function" : [
-                            categories: ["Software Development"],
-                            properties: [
-                                    "Name":  [type: 'text', required: true],
-                                    "Description":[type: 'text', required: false]
+                            ],
+                            "Software Module"     : [
+                                    parent: "Software"
+                            ],
+                            "Function"            : [
+                                    categories: ["Software Development"],
+                                    properties: [
+                                            "Name"       : [type: 'text', required: true],
+                                            "Description": [type: 'text', required: false]
+                                    ]
                             ]
-                        ]
                     ],
 
-                    Verse : [
+                    Verse                    : [
                             properties: [
                                     verseId: [name: "verseId", type: 'text', required: true],
                                     book   : [name: "book", type: 'number', required: true],
@@ -268,25 +289,25 @@ class GraphItService {
                     "Family"        : [
                             "type"      : "simple",
                             "categories": ["Family"],
-                            "notes"     :   "Family"
+                            "notes"     : "Family"
                     ],
-                    "Spouse": [
+                    "Spouse"        : [
                             "type"      : "simple",
-                            "parent"      : "Family",
-                            "categories"  : [
+                            "parent"    : "Family",
+                            "categories": [
                                     "Family"
                             ]
                     ],
-                    "Wife": [
-                            "type"      : "simple",
+                    "Wife"          : [
+                            "type"        : "simple",
                             "parent"      : "Spouse",
                             "reversedName": "Husband",
                             "categories"  : [
                                     "Family"
                             ]
                     ],
-                    "Husband": [
-                            "type"      : "simple",
+                    "Husband"       : [
+                            "type"        : "simple",
                             "parent"      : "Spouse",
                             "reversedName": "Wife",
                             "categories"  : [
@@ -302,7 +323,7 @@ class GraphItService {
                             "parent"      : "Family",
                             "notes"       : ""
                     ],
-                    "Son"         : [
+                    "Son"           : [
                             "type"        : "simple",
                             "reversedName": "Parent",
                             "categories"  : [
@@ -311,7 +332,7 @@ class GraphItService {
                             "parent"      : "Child",
                             "notes"       : ""
                     ],
-                    "Daughter"         : [
+                    "Daughter"      : [
                             "type"        : "simple",
                             "reversedName": "Parent",
                             "categories"  : [
@@ -590,7 +611,7 @@ class GraphItService {
         if (!itemType.parentName)
             itemType.parentName = TypeSystem.BASE_TYPE_NAME
         ItemType saved = (dbAccess.createItemType(itemType))
-        if(doPostProcess)
+        if (doPostProcess)
             saved = postProcess(saved)
         saved
     }

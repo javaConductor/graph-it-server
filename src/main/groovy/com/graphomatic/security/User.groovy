@@ -18,6 +18,9 @@ class User {
 	String lastName
 	String emailAddress
 	String phoneNumber
+	//// Guest User
+	boolean isGuest
+	String ipAddr
 
 	@Override
 	boolean equals(Object obj) {

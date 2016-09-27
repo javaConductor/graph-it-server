@@ -22,19 +22,16 @@ class GraphItem {
 
     List<Category> categories;
     String notes
-//    Map<String, Property> data;
     Map<String, Object> data;
     String typeName
     transient ItemType type
     String ownerName
     String groupName
     Map<String,String> accessMap = [
-            (PermissionType.Owner.name()):"W",
-            (PermissionType.Group.name()):"W",
-            (PermissionType.Public.name()):"R",
+            (PermissionType.Owner.name()):AccessType.Update.name(),
+            (PermissionType.Group.name()):AccessType.View.name(),
+            (PermissionType.Public.name()):AccessType.View.name()
     ]
-    AccessType access //: O/G/P (owner,group,public) x RW - upto 3 chars
-    String visibility //: O/G/P (owner,group,public) -
     String status = GraphItemStatus.New.name()
 }
 
