@@ -105,6 +105,7 @@ beans {
     ////////////////////////////////////////////////////////////////
     restService(RestService) { beanDefinition ->
         beanDefinition.constructorArgs = [
+                ref('dbAccess'),
                 ref('graphItService'),
                 ref('typeSystem'),
                 ref('securityResource')

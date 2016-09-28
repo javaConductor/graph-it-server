@@ -1,6 +1,7 @@
 package com.graphomatic.domain
 
 import com.graphomatic.security.User
+import com.graphomatic.service.EventType
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -12,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 class Event {
     @Id
     String id
-    String name
+    EventType eventType
     String username
     List<String> itemIds
     Date timestamp
@@ -20,21 +21,21 @@ class Event {
 
     @Override
     String toString() {
-        return "Event( $name ) @$timestamp.format('YYYY-MM-DD HH:MM:SS')"
+        return "Event( $eventType ) @$timestamp.format('YYYY-MM-DD HH:MM:SS')"
     }
 
-    Event(String eventName, User u, String description){
-        name = eventName
+    Event( EventType eventType, User u, String description){
+        this.eventType = eventType
         username = u.username
-        description = description
+        this.description = description
         timestamp = new Date()
         itemIds = []
     }
 
-    Event(String eventName, List<String> items, String description){
-        name = eventName
+    Event(EventType eventType,  List<String> items, String description){
+        this.eventType = eventType
         username = "system"
-        description = description
+        this.description = description
         timestamp = new Date()
         itemIds = items
     }

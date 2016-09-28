@@ -130,21 +130,27 @@ class GraphItService {
 
     GraphItem updateGraphItemPosition(User u, String graphItemId, long x, long y) {
         def item =  readTransform(dbAccess.updatePosition(u, graphItemId, x, y));
-        def evt = new Event("view.updatePosition",
+        def evt = new Event(EventType.ViewItemMoved,
                 [graphItemId],
                 "${u.username} moved item $graphItemId to $x, $y")
         eventService.addEvent(evt)
         item
     }
 
-    GraphItem updateGraphItem(GraphItem graphItem) {
-        return writeTransform(dbAccess.update(graphItem));
+    GraphItem updateGraphItem(u, GraphItem graphItem) {
+        def updated =  writeTransform(dbAccess.update(graphItem));
+        eventService.addEvent(new Event(
+                EventType.ItemUpdated, u, "User: ${u.username} updated item: ${graphItem.title}(${graphItem.id})"))
+        return updated
     }
 
-    GraphItem createGraphItem(GraphItem graphItem) {
+    GraphItem createGraphItem(User u, GraphItem graphItem) {
         // before we write it, lets check it
         if (graphItem.data) {//TODO  check the value and return the error message
-            typeSystem.validateProperties(graphItem.type ?: typeSystem.resolveType(graphItem.typeName), graphItem.data)
+            def type = graphItem.type ?: typeSystem.resolveType(graphItem.typeName);
+            if(!typeSystem.validateProperties(type, graphItem.data)){
+                throw new ValidationException("Invalid item properties.")
+            }
         }
         ///TODO should we store the data raw or in Property objects?????
         /// maybe we should create the Property objects here

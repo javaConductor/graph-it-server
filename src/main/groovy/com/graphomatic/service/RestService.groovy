@@ -234,7 +234,8 @@ class RestService {
 
         /// Update
         put('') { GraphItem graphItem ->
-            GraphItem g = graphItService.updateGraphItem(graphItem)
+            User u = getCurrentUser(requestContext)
+            GraphItem g = graphItService.updateGraphItem(u,graphItem)
             writeJson prepareGraphItem(g) + [links: links(g)]
         }
 
