@@ -15,21 +15,19 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate
  * Created by lee on 9/25/16.
  */
 trait UserDbAccess {
-    MongoTemplate mongo;
     GridFsTemplate gridFsTemplate
-
     UserLogin saveUserLogin(User user, Date date, String ipAddr) {
         UserLogin ul = new UserLogin(ipAddr: ipAddr, user: user, when: date );
-        mongo.insert( ul )
+        this.mongo.insert( ul )
         ul
     }
 
     List<UserGroup> getUserGroups(){
-        mongo.findAll(UserGroup)
+        this.mongo.findAll(UserGroup)
     }
 
     UserGroup getUserGroupByName(String groupName){
-        mongo.findOne(Query.query(Criteria.where("name").is(groupName)), UserGroup)
+        this.mongo.findOne(Query.query(Criteria.where("name").is(groupName)), UserGroup)
     }
 
     UserGroup addUserToGroup(String  username, String groupName){
@@ -40,17 +38,17 @@ trait UserDbAccess {
         if(!user)
             throw new IllegalArgumentException("No such user: $username")
         userGroup.users.add(user)
-        mongo.save(userGroup);
+        this.mongo.save(userGroup);
         userGroup
     }
 
     User getUserByName(String username) {
-        mongo.findOne(Query.query(Criteria.where("username").is(username)), User)
+        this.mongo.findOne(Query.query(Criteria.where("username").is(username)), User)
     }
 
     List<UserGroup> getGroupsForUser(User u){
         List<UserGroup> groups = []
-        DBCursor c=mongo.getCollection("UserGroup").find(['users': ["$elemMatch": [_id: u._id]]])
+        DBCursor c= this.mongo.getCollection("UserGroup").find(['users': ["$elemMatch": [_id: u._id]]])
         while (c.hasNext()){
             groups << (c.curr() as UserGroup)
         }
@@ -63,7 +61,7 @@ trait UserDbAccess {
     }
 
     User createUser(User user) {
-        mongo.save(user)
+        this.mongo.save(user)
         user
     }
 }

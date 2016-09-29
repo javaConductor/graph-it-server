@@ -5,9 +5,10 @@ package com.graphomatic.service
  */
 enum EventType {
     ItemUpdated, ItemCreated,
+    ItemImageCreated, ItemImageRemoved,
 
-    ViewItemMoved,
-    RelationshipCreated,
+    ViewItemMoved,ViewItemAdded,
+    RelationshipCreated,RelationshipRemoved,
 
     UserLoggedIn
 }

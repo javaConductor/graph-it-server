@@ -15,7 +15,6 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate
  * Created by lee on 9/26/16.
  */
 trait ItemDbAccess {
-    GridFsTemplate gridFsTemplate
     Criteria activeCriteria = (Criteria.where("status").is(GraphItemStatus.Active.name()))
     Criteria activeOrNewCriteria = activeCriteria.orOperator(Criteria.where("status").is(GraphItemStatus.Active.name()))
 
@@ -25,7 +24,7 @@ trait ItemDbAccess {
      * @return
      */
     GraphItem createGraphItem(GraphItem graphItem) {
-        mongo.insert(graphItem)
+        this.mongo.insert(graphItem)
         graphItem
     }
 
@@ -35,7 +34,7 @@ trait ItemDbAccess {
      * @return
      */
     GraphItem getGraphItem(String id) {
-        mongo.findById(id, GraphItem)
+        this.mongo.findById(id, GraphItem)
     }
 
     /**
@@ -45,7 +44,7 @@ trait ItemDbAccess {
      */
     boolean removeGraphItem(String id) {
         //TODO mark as deleted until no relationships then we cam remove
-        mongo.remove(new Query(Criteria.where('id').is(id)))
+        this.mongo.remove(new Query(Criteria.where('id').is(id)))
         return true
     }
 
@@ -59,7 +58,7 @@ trait ItemDbAccess {
     GraphItem updatePosition(User u , String graphItemId, long x, long y) {
         Position p = new Position(x: x, y: y);
         log.debug("GraphItem: $graphItemId position: $p");
-        GraphItem updated = mongo.findAndModify(new Query(Criteria.where('id').is(graphItemId)),
+        GraphItem updated = this.mongo.findAndModify(new Query(Criteria.where('id').is(graphItemId)),
                 Update.update('position', p), GraphItem);
 
         updated
@@ -72,7 +71,7 @@ trait ItemDbAccess {
      */
     GraphItem update(GraphItem graphItem) {
         ///TODO - update is creating dups
-        mongo.updateFirst(
+        this.mongo.updateFirst(
                 new Query().addCriteria(Criteria.where('_id').is(graphItem.id)),
                 new Update().
                         set('title', graphItem.title ?: "").
@@ -86,11 +85,19 @@ trait ItemDbAccess {
      * @param user
      * @return List of graphItems for a user
      */
-    List<GraphItem> getAllGraphItemsForUser(User user) {
+    List<GraphItem> getAllGraphItemsForUser(User user, int pageSize, int pageNumber) {
         Criteria activeCriteria = (Criteria.where("status").exists(false)
                 .orOperator(Criteria.where("status").is(GraphItemStatus.Active.name())))
         Criteria userCriteria = (Criteria.where("ownerName").is(user.username))
-        mongo.find(Query.query(activeCriteria.andOperator(userCriteria)), GraphItem.class)
+        Query q;
+        if (pageSize == 0)
+            q = Query.query(activeCriteria.andOperator(userCriteria));
+        else
+            q = Query.query(activeCriteria.andOperator(userCriteria))
+                    .skip(pageNumber > 0 ? ((pageNumber - 1) * pageSize) : 0)
+                    .limit(pageSize);
+
+        this.mongo.find(q, GraphItem)
     }
 
     /**
@@ -98,7 +105,7 @@ trait ItemDbAccess {
      * @return List of Active graphItems
      */
     List<GraphItem> getAllGraphItems() {
-        getAllGraphItems(-1, -1, null);
+        getAllGraphItems(0, 0, null);
     }
 
     /**
@@ -109,14 +116,17 @@ trait ItemDbAccess {
      */
     List<GraphItem> getAllGraphItems(int pageSize, int pageNumber, User user ) {
         Criteria criteria = activeCriteria;
+        Query q;
         if (user)
             criteria = criteria.andOperator(userCriteria(user))
-        if (pageNumber < 0)
-            mongo.find(Query.query(criteria), GraphItem)
+        if (pageSize == 0)
+            q = Query.query(criteria)
         else
-            mongo.find(Query.query(criteria)
+            q = Query.query(criteria)
                     .skip(pageNumber > 0 ? ((pageNumber - 1) * pageSize) : 0)
-                    .limit(pageSize), GraphItem.class);
+                    .limit(pageSize)
+
+        this.mongo.find(q, GraphItem)
     }
 
     Criteria userCriteria(User user){
@@ -124,18 +134,17 @@ trait ItemDbAccess {
     }
     /**
      *
+     * @param user
      * @param title
      * @param x
      * @param y
      * @return
      */
-    GraphItem createGraphItem(String title, long x, long y) {
+    GraphItem createGraphItem(User user, String title, long x, long y) {
         GraphItem g = new GraphItem(title: title,
                 position: new Position(x: x, y: y))
         g.status = GraphItemStatus.New.name();
-        mongo.insert(g)
-        g
+        createGraphItem(user, g)
     }
-
 
 }

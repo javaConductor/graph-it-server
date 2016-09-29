@@ -44,6 +44,7 @@ class TypeSystem {
         cache[baseItemType.name]=baseItemType
     }
 
+    /// Make sure default values are in the data store
     ItemType ensureBaseType(String baseTypeName) {
         Category cat =  ensureBaseCategory("ALL")
         ItemType t = dbAccess.getTypeByName(baseTypeName);

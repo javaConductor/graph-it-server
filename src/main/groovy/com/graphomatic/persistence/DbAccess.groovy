@@ -97,7 +97,7 @@ class DbAccess implements UserDbAccess, ItemDbAccess {
      * @return
      */
     List<ItemRelationship> getRelationshipForItems(List<String> itemIds) {
-        /// call mongo to get ItemRelationship where ( (itemRelationship.sourceItemId in itemIds) OR (itemRelationship.sourceItemId in itemIds) )
+        /// call mongo to get ItemRelationship where ( (itemRelationship.sourceItemId in relatedIds) OR (itemRelationship.sourceItemId in relatedIds) )
         mongo.find(new Query(
                 Criteria.where("sourceItemId").in(itemIds).orOperator(
                         Criteria.where("relatedItemId").in(itemIds))), ItemRelationship.class)

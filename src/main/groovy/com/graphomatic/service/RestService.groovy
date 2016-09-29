@@ -97,14 +97,14 @@ class RestService {
             }
 
             delete(':id') { id ->
-                boolean ok = graphItService.removeItemRelationship(id);
+                User u = getCurrentUser(requestContext)
+                boolean ok = graphItService.removeItemRelationship(u, id)
                 writeJson([success: ok])
             }
 
             /// receives item ids and returns all their relationships
             post("for-items") { List<String> itemIds ->
                 List<ItemRelationship> items = graphItService.getRelationshipsForItems(itemIds)
-
                 writeJson items.collect { itemRelationship ->
                     [_links: links(itemRelationship)] + Utils.persistentFields(itemRelationship.properties)
                 }
@@ -112,7 +112,8 @@ class RestService {
 
             /// creates item relationship
             post("") { ItemRelationship rel ->
-                ItemRelationship itemRelationship = graphItService.createItemRelationship(rel);
+                User u = getCurrentUser(requestContext)
+                ItemRelationship itemRelationship = graphItService.createItemRelationship(u, rel);
                 writeJson Utils.persistentFields(itemRelationship.properties) + [_links: links(itemRelationship)]
             }
 
@@ -143,7 +144,8 @@ class RestService {
 
             /// post
             post(":graphItemId/order/main/:imageId") {is, graphItemId, imageId ->
-                GraphItem graphItem = graphItService.setAsMainImage(graphItemId, imageId)
+                User u = getCurrentUser(requestContext)
+                GraphItem graphItem = graphItService.setAsMainImage(u, graphItemId, imageId)
                 if(graphItem) {
                     writeJson asMap(graphItem)
                 }else{
@@ -153,12 +155,12 @@ class RestService {
 
             /// create a new image for this graph-item
             post(":graphItemId") {FormData formData, String graphItemId ->
-
+                User u = getCurrentUser(requestContext)
                 if (!formData.hasFiles()) {
                     error 400, "No file uploaded!"
                 }else {
                     ByteArrayInputStream is = new ByteArrayInputStream(formData.files[0].content)
-                    ImageData imageData = graphItService.createItemImage(graphItemId, is, formData.files[0].contentType, index)
+                    ImageData imageData = graphItService.createItemImage(u, graphItemId, is, formData.files[0].contentType, index)
                     contentType "${imageData.contentType}"
                     location "/graph-item-images/$graphItemId/${imageData.id}"
                     writeFrom imageData.inputStream
@@ -213,10 +215,17 @@ class RestService {
 
     def graphItemRes = gServ.resource("graph-item") {
 
-
         /// get all graph-items
         get("") { ->
-            writeJson graphItService.allGraphItems.collect { graphItem ->
+            writeJson graphItService.getGraphItemsForUser( 0, 0, u ).collect { graphItem ->
+                [links: links(graphItem)] + prepareGraphItem(graphItem)
+            }
+        }
+
+        /// get all graph-items visible to a user
+        get(":") { ->
+            User u = getCurrentUser(requestContext)
+            writeJson graphItService.getGraphItemsForUser( 0, 0, u ).collect { graphItem ->
                 [links: links(graphItem)] + prepareGraphItem(graphItem)
             }
         }
@@ -229,7 +238,8 @@ class RestService {
 
         /// remove a graphitem
         delete(':id') { id ->
-            writeJson ([ ok : graphItService.removeGraphItem( id ) ])
+            User u = getCurrentUser(requestContext)
+            writeJson ([ ok : graphItService.removeGraphItem(u, id ) ])
         }
 
         /// Update
@@ -249,8 +259,9 @@ class RestService {
 
         /// Add item note
         put('/:id/notes') {String notes, graphItemId ->
+            User currentUser = getCurrentUser(requestContext)
             GraphItem gOld = graphItService.getGraphItem(graphItemId);
-            GraphItem g = graphItService.updateGraphItemNotes(graphItemId, notes ?: '')
+            GraphItem g = graphItService.updateGraphItemNotes(currentUser, graphItemId, notes ?: '')
             log.debug("graphItem [$graphItemId] set notes: from [${gOld.notes}] to [${g.notes}].");
             writeJson prepareGraphItem(g) + [links: links(g)]
         }
@@ -275,7 +286,7 @@ class RestService {
                           : new Position(x:100L, y:200L);
 
             Category category = graphItService.getCategory(cat)
-            GraphItem g = graphItService.createGraphItem( new GraphItem(title: title,
+            GraphItem g = graphItService.createGraphItem(currentUser, new GraphItem(title: title,
                     typeName: typeName,
                     images: [],
                     data: jsonData,
@@ -293,7 +304,8 @@ class RestService {
 
         /// Create
             post('') { GraphItem graphItem ->
-            GraphItem g = graphItService.createGraphItem(graphItem)
+                User currentUser = getCurrentUser(requestContext)
+                GraphItem g = graphItService.createGraphItem(currentUser, graphItem)
             writeJson prepareGraphItem(g) + [_links: links(g)]
 
         }

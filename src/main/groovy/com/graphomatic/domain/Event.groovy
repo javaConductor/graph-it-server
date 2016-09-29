@@ -15,7 +15,7 @@ class Event {
     String id
     EventType eventType
     String username
-    List<String> itemIds
+    List<String> relatedIds
     Date timestamp
     String description
 
@@ -29,7 +29,7 @@ class Event {
         username = u.username
         this.description = description
         timestamp = new Date()
-        itemIds = []
+        relatedIds = []
     }
 
     Event(EventType eventType,  List<String> items, String description){
@@ -37,6 +37,13 @@ class Event {
         username = "system"
         this.description = description
         timestamp = new Date()
-        itemIds = items
+        relatedIds = items
+    }
+    Event(EventType eventType, User u, List<String> items, String description){
+        this.eventType = eventType
+        username = u.username
+        this.description = description
+        timestamp = new Date()
+        relatedIds = items
     }
 }
