@@ -20,16 +20,15 @@ import org.springframework.stereotype.Service
 @Service
 trait  ItemService {
 
-    DbAccess _dbAccess = this.dbAccess;
     GraphItem getGraphItem(String id) {
-        return readTransform(dbAccess.getGraphItem(id))
+        return readTransform(this.dbAccess.getGraphItem(id))
     }
 
     boolean removeGraphItem(User u, String id) {
         GraphItem item = getGraphItem(id);
         if (item) {
             item.status = GraphItemStatus.Deleted.name();
-            def removed = dbAccess.update(item);
+            def removed = this.dbAccess.update(item);
             def evt = new Event(EventType.ViewItemMoved,
                     u,
                     [id],
@@ -41,20 +40,25 @@ trait  ItemService {
     }
 
     List<GraphItem> getAllGraphItems() {
-        return _dbAccess.getAllGraphItems()
+        return this.dbAccess.getAllGraphItems()
                 .collect(this.&readTransform)
     }
 
     List<GraphItem> getGraphItemsForUser(int pageSize, int pageNumber, User user) {
-        return dbAccess.getAllGraphItemsForUser(pageSize, pageNumber, user)
+        return this.dbAccess.getAllGraphItemsForUser(pageSize, pageNumber, user)
                 .collect(this.&readTransform)
                 .findAll { item ->
             securityService.userCanViewItem(user, item)
         }
     }
 
+    List<GraphItem> getPublicGraphItems(int pageSize, int pageNumber) {
+        return this.dbAccess.getPublicGraphItems(pageSize, pageNumber)
+                .collect(this.&readTransform)
+    }
+
     GraphItem setAsMainImage(User u, String graphItemId, String imageId) {
-        GraphItem graphItem = dbAccess.getGraphItem(graphItemId)
+        GraphItem graphItem = this.dbAccess.getGraphItem(graphItemId)
         if (!graphItemId)
             return null
 
@@ -69,7 +73,7 @@ trait  ItemService {
 
     GraphItem updateGraphItemNotes(User u, String graphItemId, String notes) {
         if (securityService.userCanUpdateItem(u, getGraphItem(graphItemId))) {
-            dbAccess.updateGraphItemNotes(graphItemId, notes)
+            this.dbAccess.updateGraphItemNotes(graphItemId, notes)
         }
     }
 
@@ -86,7 +90,7 @@ trait  ItemService {
     }
 
     GraphItem updateGraphItemPosition(User u, String graphItemId, long x, long y) {
-        def item = readTransform(dbAccess.updatePosition(u, graphItemId, x, y));
+        def item = readTransform(this.dbAccess.updatePosition(u, graphItemId, x, y));
         def evt = new Event(EventType.ViewItemMoved,
                 [graphItemId],
                 "${u.username} moved item $graphItemId to $x, $y")
@@ -95,7 +99,7 @@ trait  ItemService {
     }
 
     GraphItem updateGraphItem(User u, GraphItem graphItem) {
-        def updated = writeTransform(dbAccess.update(graphItem));
+        def updated = writeTransform(this.dbAccess.update(graphItem));
         eventService.addEvent(new Event(
                 EventType.ItemUpdated, u, [graphItem.id], "User: ${u.username} updated item: ${graphItem.title}(${graphItem.id})"))
         return updated
@@ -111,7 +115,7 @@ trait  ItemService {
         }
         ///TODO should we store the data raw or in Property objects?????
         /// maybe we should create the Property objects here
-        def savedItem = readTransform(dbAccess.createGraphItem( writeTransform(graphItem)))
+        def savedItem = readTransform(this.dbAccess.createGraphItem( writeTransform(graphItem)))
         eventService.addEvent(new Event(
                 EventType.ItemUpdated, u, [savedItem.id], "User: ${u.username} updated item: ${savedItem.title}(${savedItem.id})"))
         savedItem
@@ -494,14 +498,14 @@ trait  ItemService {
     //////////////////////////////////////////////////////////////////////////////////////////////////
 
     ImageData getItemData(String path) {
-        dbAccess.getImageData(path)
+        this.dbAccess.getImageData(path)
     }
 
     ImageData createItemImage(User u, String graphItemId,
                               InputStream inputStream,
                               String contentType) {
 
-        ImageData imageData = dbAccess.createItemImage(graphItemId, contentType, inputStream)
+        ImageData imageData = this.dbAccess.createItemImage(graphItemId, contentType, inputStream)
         GraphItem graphItem = getGraphItem(graphItemId);
         eventService.addEvent(new Event(
                 EventType.ItemImageCreated, u, [graphItemId], "User: ${u.username} created image ${imageData.id} for item: ${graphItem.title}(${graphItem.id})"))
@@ -518,18 +522,18 @@ trait  ItemService {
      * @return
      */
     ItemType getItemTypeByName(String name) {
-        ItemType itemType = dbAccess.getItemTypeByName(name)
+        ItemType itemType = this.dbAccess.getItemTypeByName(name)
         postProcess(itemType)
     }
 
     ItemType getAllItemTypes() {
-        dbAccess.getAllItemTypes().collect(postProcess)
+        this.dbAccess.getAllItemTypes().collect(postProcess)
     }
 
     ItemType createItemType(ItemType itemType, boolean doPostProcess ) {
         if (!itemType.parentName)
             itemType.parentName = TypeSystem.BASE_TYPE_NAME
-        ItemType saved = (dbAccess.createItemType(itemType))
+        ItemType saved = (this.dbAccess.createItemType(itemType))
         if (doPostProcess)
             saved = postProcess(saved)
         saved

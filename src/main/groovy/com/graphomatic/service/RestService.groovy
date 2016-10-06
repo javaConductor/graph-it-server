@@ -216,16 +216,24 @@ class RestService {
     def graphItemRes = gServ.resource("graph-item") {
 
         /// get all graph-items
+//        get("") { ->
+//            writeJson graphItService.allGraphItems().collect { graphItem ->
+//                [links: links(graphItem)] + prepareGraphItem(graphItem)
+//            }
+//        }
+
+        /// get all graph-items visible to a user
         get("") { ->
-            writeJson graphItService.getGraphItemsForUser( 0, 0, u ).collect { graphItem ->
+            User u = getCurrentUser(requestContext)
+            def result = ( u ) ? graphItService.getGraphItemsForUser( 0, 0, u ) : graphItService.getPublicGraphItems( 0, 0 );
+            writeJson result.collect { graphItem ->
                 [links: links(graphItem)] + prepareGraphItem(graphItem)
             }
         }
 
-        /// get all graph-items visible to a user
-        get(":") { ->
-            User u = getCurrentUser(requestContext)
-            writeJson graphItService.getGraphItemsForUser( 0, 0, u ).collect { graphItem ->
+        /// get graph-items visible to all
+        get("public") { ->
+            writeJson graphItService.getPublicGraphItems( 0, 0 ).collect { graphItem ->
                 [links: links(graphItem)] + prepareGraphItem(graphItem)
             }
         }
@@ -376,8 +384,14 @@ class RestService {
         }
     }
 
+    User guestUser = new User(isGuest: true, username: "system")
     User getCurrentUser(RequestContext requestContext){
-        dbAccess.getUserByName(requestContext.principal.name)
+        if(!requestContext.principal)
+            return null
+        //TODO fix this
+        if (requestContext?.principal?.name == "system")
+            return guestUser;
+        dbAccess.getUserByName(requestContext?.principal?.name)
     }
     def start() {
         stopFn = createService().start(8888)

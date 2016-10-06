@@ -101,6 +101,23 @@ trait ItemDbAccess {
     }
 
     /**
+     * @param user
+     * @return List of graphItems for a user
+     */
+    List<GraphItem> getPublicGraphItems( int pageSize, int pageNumber) {
+//        Criteria activeCriteria = (Criteria.where("status").exists(false)
+//                .orOperator(Criteria.where("status").is(GraphItemStatus.Active.name())))
+         Criteria userCriteria = (Criteria.where("ownerName").is("system"))
+        Query q = Query.query((userCriteria));
+        //Query q = Query.query(Criteria.andOperator(activeCriteria, userCriteria));
+        if (pageSize > 0)
+            q = q.skip(pageNumber > 0 ? ((pageNumber - 1) * pageSize) : 0)
+                    .limit(pageSize);
+
+        this.mongo.find(q, GraphItem)
+    }
+
+    /**
      *
      * @return List of Active graphItems
      */
