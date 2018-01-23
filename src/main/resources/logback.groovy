@@ -49,6 +49,6 @@ def setupLoggers() {
     logger("org.springframework", WARN, ["CONSOLE"]) // Spring
     logger("io.github.javaconductor.gserv", DEBUG, ["FILE"]) // gServ
     logger("com.graphomatic", DEBUG, ["CONSOLE", "FILE"]) // App
-    //root(DEBUG, ["CONSOLE", "FILE"])
+    root(DEBUG, ["CONSOLE", "FILE"])
     root(DEBUG, ["FILE"])
 }

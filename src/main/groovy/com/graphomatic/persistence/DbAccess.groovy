@@ -86,7 +86,9 @@ class DbAccess implements UserDbAccess, ItemDbAccess {
      * @return
      */
     ItemRelationship createItemRelationship(String sourceItemId, String relatedItemId, Relationship relationship) {
-        def itemRelationship = new ItemRelationship(sourceItemId: sourceItemId, relatedItemId: relatedItemId, relationship: relationship)
+        def itemRelationship = new ItemRelationship(sourceItemId: sourceItemId,
+                relatedItemId: relatedItemId,
+                relationship: relationship)
         mongo.insert(itemRelationship)
         itemRelationship
     }

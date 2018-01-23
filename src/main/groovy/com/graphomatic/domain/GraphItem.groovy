@@ -15,14 +15,15 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 class GraphItem {
     @Id
-    String id;
-    String title;
-    List<ItemImage> images;
-    Position position = new Position(x:100, y: 200);
+    String id
+    String title
+    List<ItemImage> images
+    //default position
+    Position position = new Position(x:100, y: 200)
 
-    List<Category> categories;
+    List<Category> categories
     String notes
-    Map<String, Object> data;
+    Map<String, Object> data
     String typeName
     transient ItemType type
     String ownerName

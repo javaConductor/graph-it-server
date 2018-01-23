@@ -8,7 +8,7 @@ import org.springframework.data.annotation.Id
 class ItemRelationship {
     @Id
     String id
-    String sourceItemId;
-    String relatedItemId;
-    Relationship relationship;
+    String sourceItemId
+    String relatedItemId
+    Relationship relationship
 }

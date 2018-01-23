@@ -12,7 +12,8 @@ class View {
     String id;
     String name;
     String defaultViewType = "default";
-    List<ViewItem> viewItems;
+    List<ViewItem> viewItems
+    String owner
     // protects from editing and/or moving items
     // W | R |
     // change: view items, view attributes ( current viewtype, )

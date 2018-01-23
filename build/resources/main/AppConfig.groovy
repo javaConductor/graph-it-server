@@ -8,6 +8,11 @@ import com.graphomatic.typesystem.TypeSystem
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.gridfs.GridFsTemplate
 
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 /**
  * Created by javaConductor on Jun 11.
  */
@@ -66,6 +71,23 @@ beans {
         beanDefinition.constructorArgs = [
                 ref('dbAccess')
         ]
+    }
+
+
+    graphDbFactory(GraphDatabaseFactory) {
+
+    }
+
+    graphDbService(GraphDatabaseService){
+        new GraphDatabaseFactory().newEmbeddedDatabase("/opt/neo4j-store")
+    }
+
+
+    graphDbAccess(GraphDbAccess) { beanDefinition ->
+        beanDefinition.constructorArgs = [
+            ref('graphDbService')
+        ]
+
     }
     ////////////////////////////////////////////////////////////////
     //// Security Components

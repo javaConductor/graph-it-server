@@ -215,13 +215,6 @@ class RestService {
 
     def graphItemRes = gServ.resource("graph-item") {
 
-        /// get all graph-items
-//        get("") { ->
-//            writeJson graphItService.allGraphItems().collect { graphItem ->
-//                [links: links(graphItem)] + prepareGraphItem(graphItem)
-//            }
-//        }
-
         /// get all graph-items visible to a user
         get("") { ->
             User u = getCurrentUser(requestContext)
