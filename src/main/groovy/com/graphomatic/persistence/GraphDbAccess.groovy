@@ -1,15 +1,18 @@
 package com.graphomatic.persistence
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.graphomatic.domain.Category
 import com.graphomatic.domain.GraphItem
 import com.graphomatic.domain.ImageData
 import com.graphomatic.domain.ItemImage
 import com.graphomatic.domain.ItemRelationship
+import com.graphomatic.domain.Position
 import com.graphomatic.domain.Relationship
 import com.graphomatic.domain.View
 import com.graphomatic.typesystem.domain.Group
 import com.graphomatic.typesystem.domain.ItemType
 import com.mongodb.gridfs.GridFSFile
+import com.mongodb.util.JSON
 import groovy.util.logging.Commons
 import groovy.util.logging.Log
 import org.neo4j.graphdb.GraphDatabaseService
@@ -309,51 +312,76 @@ class GraphDbAccess {
      * @return
      */
     GraphItem createGraphItem(GraphItem graphItem) {
-        String typeName = "${graphItem.typeName}" ?: "Node"
-        graphItem.images.head()
+        String typeName = graphItem.typeName ?: "Node"
         Session s = driver.session()
         s.writeTransaction(new TransactionWork() {
             @Override
             Object execute(Transaction tx) {
+                ObjectMapper objectMapper = new ObjectMapper()
+                def strAccessMap = objectMapper.writeValueAsString(graphItem.accessMap)
+                def strImages = objectMapper.writeValueAsString(graphItem.images)
+                def strData = objectMapper.writeValueAsString(graphItem.data)
+                def strCategories = objectMapper.writeValueAsString(graphItem.categories)
+                def strPosition = objectMapper.writeValueAsString(graphItem.position)
                 // create uuid for this item
                 String id = UUID.randomUUID().toString()
                 Map mProps = [
                     id:id,
-                    name: typeName,
-                        ownerName: graphItem.ownerName,
-                        groupName: graphItem.groupName,
-                        groupName: graphItem.accessMap,
-
+                    title:graphItem.title,
+                    typeName: typeName,
+                    ownerName: graphItem.ownerName,
+                    groupName: graphItem.groupName,
+                    accessMap: strAccessMap,
+                    images: strImages,
+                    categories: strCategories,
+                    position: strPosition,
+                    notes: graphItem.notes,
+                    status: graphItem.status,
+                    data: strData
                 ]
-                String statement = "CREATE (item:typeName {" +
-                        "id:'$id', " +
-                        "name:'$typeName', " +
-                        "description:'${graphItem.description}'" +
-                        "description:'${category.description}'" +
-                        "  } ) " +
-                        //"WITH cat as c "+
-                        //"MATCH (category:_Category_ {id:c.id} ) " +
-                        "RETURN category"
-                log.debug("Creating category using: [$statement]")
-                StatementResult res =  tx.run(statement)
+
+                String statement = 'CREATE (item:typeName ) ' +
+                        "SET  item:item\$node\$ " +
+                        'SET item += $props '
+                        "RETURN item"
+
+                log.debug("Creating graphItem using: [$statement]")
+                StatementResult res =  tx.run(statement, [props : mProps] )
                 if (res.hasNext()) {
-                    def c = res.next().get("category")
+                    def c = res.next()
                     System.out.println(c.asMap())
-                    def cat = mapToCategory( c.asMap() )
-                    log.debug("Created category: $cat ")
-                    cat
+                    def item = mapToGraphItem( c.asMap() )
+                    log.debug("Created graphItem: $item ")
+                    item
                 }
                 else
                     null
             }
         })
-
-
-
-        this.mongo.insert(graphItem)
-        graphItem
     }
 
+    GraphItem mapToGraphItem(Map<String, Object> graphItemMap) {
+ObjectMapper objectMapper = new ObjectMapper();
+        def data = objectMapper.readValue(graphItemMap["data"], Map)
+        def images = objectMapper.readValue(graphItemMap["images"], List)
+        def accessMap = objectMapper.readValue(graphItemMap["accessMap", Map])
+        def categories = objectMapper.readValue(graphItemMap["categories"], List)
+        def position = objectMapper.readValue(graphItemMap["position"], Position)
+        new GraphItem(
+                id:     graphItemMap['id'],
+                typeName:  graphItemMap["typeName"],
+                data:   data,
+                title:   graphItemMap["title"],
+                notes:  graphItemMap["notes"],
+                status: graphItemMap["status"],
+                images: images,
+                accessMap:accessMap,
+                ownerName: graphItemMap['ownerName'],
+                groupName: graphItemMap['groupName'],
+                categories: categories,
+                position: position
+        )
+    }
 
 //
 //    List<Relationship> getRelationshipDefs() {

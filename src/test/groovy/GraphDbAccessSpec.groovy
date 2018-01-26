@@ -1,4 +1,6 @@
 import com.graphomatic.domain.Category
+import com.graphomatic.domain.GraphItem
+import com.graphomatic.domain.GraphItemStatus
 import com.graphomatic.persistence.GraphDbAccess
 import com.graphomatic.spring.SpringConfig
 import com.graphomatic.typesystem.PrimitiveTypes
@@ -34,6 +36,20 @@ class GraphDbAccessSpec extends  Specification {
         saved != null
         def wasRemoved = dbAccess.removeCategory(a.id)
         wasRemoved == true
+
+    }
+    def "should create graphItem"(){
+        when:
+        GraphItem item = new GraphItem(
+                id: "numberOne", images: [], title: "The New One",
+                status: GraphItemStatus.New.toString(),
+                ownerName: "Lee", groupName: "Lee",
+                notes: "Notes ...", accessMap: [:],
+                data: [name: "lee collins", age: 50], typeName: "Person")
+        def a=dbAccess.createGraphItem(item)
+
+        then:
+        a != null
 
     }
 

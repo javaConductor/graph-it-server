@@ -13,7 +13,7 @@ class ViewItem {
     String itemId;
     transient GraphItem item;
     Position position;
-    int height;
-    int width;
+    int height
+    int width
     String uiDisplayMode; //( fullscreen|normal|compact )
 }
